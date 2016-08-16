@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GroupFinder.Common.Search;
+using System;
 
 namespace GroupFinder.Common
 {

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using GroupFinder.Common.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
@@ -6,7 +7,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Aad
 {
     public class AadGraphClient
     {
@@ -39,19 +40,19 @@ namespace GroupFinder.Common
 
         #region Users
 
-        public Task<IList<AadUser>> FindUsersAsync(string searchText)
+        public Task<IList<IUser>> FindUsersAsync(string searchText)
         {
             return FindUsersAsync(searchText, false);
         }
 
-        public async Task<IList<AadUser>> FindUsersAsync(string searchText, bool includeGuests)
+        public async Task<IList<IUser>> FindUsersAsync(string searchText, bool includeGuests)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
                 throw new ArgumentException($"The \"{nameof(searchText)}\" parameter is required.", nameof(searchText));
             }
 
-            var users = new List<AadUser>();
+            var users = new List<IUser>();
             this.logger.Log(EventLevel.Informational, $"Retrieving users for search term \"{searchText}\"");
             var escapedSearchText = Uri.EscapeUriString(searchText);
             // Search for the user in all potentially interesting fields in the directory.
@@ -73,7 +74,7 @@ namespace GroupFinder.Common
 
         #region Group Membership
 
-        public async Task<IList<AadGroup>> GetDirectGroupMembershipsAsync(string user)
+        public async Task<IList<IGroup>> GetDirectGroupMembershipsAsync(string user)
         {
             if (string.IsNullOrWhiteSpace(user))
             {
@@ -99,7 +100,7 @@ namespace GroupFinder.Common
             //var resultContent = await httpClient.GetStringAsync("https://graph.windows.net/<tenant>/users/<upn>/memberOf?api-version=1.6");
 
             // We opt for the 3rd option
-            var groups = new List<AadGroup>();
+            var groups = new List<IGroup>();
             this.logger.Log(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
             await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, (group, state) =>
             {

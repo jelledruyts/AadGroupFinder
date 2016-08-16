@@ -4,7 +4,8 @@
     {
         public const string AadEndpoint = "https://login.microsoftonline.com/";
         public const string AadGraphApiEndpoint = "https://graph.windows.net/";
-        public const string AadGraphApiVersionParameterName = "api-version";
-        public const string AadGraphApiVersionNumber = "1.6";
+
+        internal const string AadGraphApiVersionParameterName = "api-version";
+        internal const string AadGraphApiVersionNumber = "1.6";
     }
 }

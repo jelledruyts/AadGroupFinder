@@ -1,4 +1,8 @@
-﻿using System;
+﻿using GroupFinder.Common.Aad;
+using GroupFinder.Common.Logging;
+using GroupFinder.Common.PersistentStorage;
+using GroupFinder.Common.Search;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
@@ -48,7 +52,7 @@ namespace GroupFinder.Common
 
         #region Users
 
-        public Task<IList<AadUser>> FindUsersAsync(string searchText)
+        public Task<IList<IUser>> FindUsersAsync(string searchText)
         {
             return this.graphClient.FindUsersAsync(searchText, false);
         }
@@ -68,7 +72,7 @@ namespace GroupFinder.Common
             var userGroupLists = await Task.WhenAll(userTasks);
 
             this.logger.Log(EventLevel.Informational, "Processing shared group memberships");
-            var sharedGroupMemberships = new Dictionary<AadGroup, IList<string>>();
+            var sharedGroupMemberships = new Dictionary<IGroup, IList<string>>();
             for (var i = 0; i < userIds.Count; i++)
             {
                 var userId = userIds[i];
@@ -140,7 +144,7 @@ namespace GroupFinder.Common
             await this.graphClient.VisitGroupsAsync(pageHandler, null, continuationUrl);
         }
 
-        public Task<IList<SearchGroup>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
+        public Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
         {
             return this.searchService.FindGroupsAsync(searchText, pageSize, pageIndex);
         }

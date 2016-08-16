@@ -1,4 +1,8 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Common.Aad;
+using GroupFinder.Common.Logging;
+using GroupFinder.Common.PersistentStorage;
+using GroupFinder.Common.Search;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Configuration;
@@ -159,8 +163,7 @@ namespace GroupFinder.ConsoleClient
             var graphClient = new AadGraphClient(logger, aadTenant, accessTokenFactory);
             var persistentStorage = new FileStorage(logger);
             var searchService = new AzureSearchService(logger, azureSearchService, azureSearchIndex, azureSearchAdminKey);
-            var processor = new Processor(logger, persistentStorage, graphClient, searchService);
-            return processor;
+            return new Processor(logger, persistentStorage, graphClient, searchService);
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using GroupFinder.Common;
+﻿using GroupFinder.Common.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Diagnostics.Tracing;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace GroupFinder.ConsoleClient
+namespace GroupFinder.Common.PersistentStorage
 {
     public class FileStorage : IPersistentStorage
     {

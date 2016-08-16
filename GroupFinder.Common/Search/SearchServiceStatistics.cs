@@ -1,4 +1,4 @@
-﻿namespace GroupFinder.Common
+﻿namespace GroupFinder.Common.Search
 {
     public class SearchServiceStatistics
     {

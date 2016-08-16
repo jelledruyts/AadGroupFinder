@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Aad
 {
     public abstract class AadEntity
     {

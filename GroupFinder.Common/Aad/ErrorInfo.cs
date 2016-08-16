@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Aad
 {
     [DebuggerDisplay("Error: {Code}")]
     internal class ErrorInfo

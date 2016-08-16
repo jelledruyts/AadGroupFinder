@@ -1,8 +1,7 @@
-﻿using GroupFinder.Common;
-using System;
+﻿using System;
 using System.Diagnostics.Tracing;
 
-namespace GroupFinder.ConsoleClient
+namespace GroupFinder.Common.Logging
 {
     public class ConsoleLogger : LoggerBase
     {

@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.PersistentStorage
 {
     public interface IPersistentStorage
     {

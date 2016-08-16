@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.Tracing;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Logging
 {
     public interface ILogger
     {

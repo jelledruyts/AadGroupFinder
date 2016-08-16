@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Threading;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Logging
 {
     public abstract class LoggerBase : ILogger
     {
@@ -30,7 +31,7 @@ namespace GroupFinder.Common
 
         protected string GetFormattedMessage(EventLevel level, string message)
         {
-            return string.Format(CultureInfo.CurrentCulture, "[{0}] [{1,-13}] {2}", DateTime.Now.ToString(), level.ToString(), message);
+            return string.Format(CultureInfo.CurrentCulture, "[{0}] [T{1:D2}] [{2,-13}] {3}", DateTime.Now.ToString(), Thread.CurrentThread.ManagedThreadId, level.ToString(), message);
         }
     }
 }

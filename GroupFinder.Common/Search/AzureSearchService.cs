@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Search;
+﻿using GroupFinder.Common.Logging;
+using Microsoft.Azure.Search;
 using Microsoft.Azure.Search.Models;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Search
 {
     public class AzureSearchService : ISearchService
     {
@@ -110,7 +111,7 @@ namespace GroupFinder.Common
 
         #region Upsert & Update Groups
 
-        public async Task UpsertGroupsAsync(IEnumerable<AadGroup> groups)
+        public async Task UpsertGroupsAsync(IEnumerable<IGroup> groups)
         {
             if (groups == null || !groups.Any())
             {
@@ -171,7 +172,7 @@ namespace GroupFinder.Common
 
         #region Find Groups
 
-        public async Task<IList<SearchGroup>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
+        public async Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
@@ -186,7 +187,7 @@ namespace GroupFinder.Common
             };
             var result = await this.indexClient.Documents.SearchAsync(searchText, parameters);
             this.logger.Log(EventLevel.Informational, $"Search for \"{searchText}\" resulted in {result.Results.Count} results");
-            var groups = new List<SearchGroup>();
+            var groups = new List<IGroupSearchResult>();
             foreach (var documentResult in result.Results)
             {
                 groups.Add(new SearchGroup

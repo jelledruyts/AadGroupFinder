@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Aad
 {
-    public class SearchGroup
+    [DebuggerDisplay("Group: {DisplayName}")]
+    public class AadGroup : AadEntity, IGroup
     {
-        // Search-specific properties.
-        public double Score { get; set; }
-        public IList<string> Tags { get; set; }
+        public const string ObjectTypeName = "Group";
 
-        // Base properties.
-        public string ObjectId { get; set; }
         public string DisplayName { get; set; }
         public string Description { get; set; }
         public string Mail { get; set; }

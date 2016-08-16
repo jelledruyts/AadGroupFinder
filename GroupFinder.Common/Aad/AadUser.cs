@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Aad
 {
     [DebuggerDisplay("User {DisplayName}")]
-    public class AadUser : AadEntity
+    public class AadUser : AadEntity, IUser
     {
         public const string ObjectTypeName = "User";
         public const string UserTypeGuest = "Guest";

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Logging
 {
     public class AggregateLogger : ILogger
     {
