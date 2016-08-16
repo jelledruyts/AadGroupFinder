@@ -137,6 +137,9 @@ namespace GroupFinder.ConsoleClient
             var azureSearchService = ConfigurationManager.AppSettings["AzureSearchService"];
             var azureSearchIndex = ConfigurationManager.AppSettings["AzureSearchIndex"];
             var azureSearchAdminKey = ConfigurationManager.AppSettings["AzureSearchAdminKey"];
+            var azureStorageAccount = ConfigurationManager.AppSettings["AzureStorageAccount"];
+            var azureStorageContainer = ConfigurationManager.AppSettings["AzureStorageContainer"];
+            var azureStorageKey = ConfigurationManager.AppSettings["AzureStorageKey"];
 
             var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + aadTenant, false);
             var clientCredential = default(ClientCredential);
@@ -161,7 +164,7 @@ namespace GroupFinder.ConsoleClient
             };
 
             var graphClient = new AadGraphClient(logger, aadTenant, accessTokenFactory);
-            var persistentStorage = new FileStorage(logger);
+            var persistentStorage = new AzureBlobStorage(logger, azureStorageAccount, azureStorageContainer, azureStorageKey);
             var searchService = new AzureSearchService(logger, azureSearchService, azureSearchIndex, azureSearchAdminKey);
             return new Processor(logger, persistentStorage, graphClient, searchService);
         }
