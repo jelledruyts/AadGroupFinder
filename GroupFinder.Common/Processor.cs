@@ -10,7 +10,9 @@ namespace GroupFinder.Common
     {
         #region Fields
 
-        private readonly IHost host;
+        private const string ProcessorStateFileName = "GroupFinder.ProcessorState.json";
+        private readonly ILogger logger;
+        private readonly IPersistentStorage persistentStorage;
         private readonly AadGraphClient graphClient;
         private readonly ISearchService searchService;
 
@@ -18,11 +20,15 @@ namespace GroupFinder.Common
 
         #region Constructors
 
-        public Processor(IHost host, AadGraphClient graphClient, ISearchService searchService)
+        public Processor(ILogger logger, IPersistentStorage persistentStorage, AadGraphClient graphClient, ISearchService searchService)
         {
-            if (host == null)
+            if (logger == null)
             {
-                throw new ArgumentNullException(nameof(host));
+                throw new ArgumentNullException(nameof(logger));
+            }
+            if (persistentStorage == null)
+            {
+                throw new ArgumentNullException(nameof(persistentStorage));
             }
             if (graphClient == null)
             {
@@ -32,7 +38,8 @@ namespace GroupFinder.Common
             {
                 throw new ArgumentNullException(nameof(searchService));
             }
-            this.host = host;
+            this.logger = logger;
+            this.persistentStorage = persistentStorage;
             this.graphClient = graphClient;
             this.searchService = searchService;
         }
@@ -56,11 +63,11 @@ namespace GroupFinder.Common
             {
                 throw new ArgumentException($"The \"{nameof(userIds)}\" parameter is required and needs to have at least one item.", nameof(userIds));
             }
-            this.host.Log(EventLevel.Informational, $"Retrieving all group memberships for {userIds.Count} user(s)");
+            this.logger.Log(EventLevel.Informational, $"Retrieving all group memberships for {userIds.Count} user(s)");
             var userTasks = userIds.Select(u => this.graphClient.GetDirectGroupMembershipsAsync(u));
             var userGroupLists = await Task.WhenAll(userTasks);
 
-            this.host.Log(EventLevel.Informational, "Processing shared group memberships");
+            this.logger.Log(EventLevel.Informational, "Processing shared group memberships");
             var sharedGroupMemberships = new Dictionary<AadGroup, IList<string>>();
             for (var i = 0; i < userIds.Count; i++)
             {
@@ -82,21 +89,23 @@ namespace GroupFinder.Common
 
         public async Task SynchronizeGroupsAsync()
         {
-            var processorState = await this.host.GetProcessorStateAsync();
+            var processorState = await this.persistentStorage.LoadAsync<ProcessorState>(ProcessorStateFileName);
             var continuationUrl = processorState.GroupSyncContinuationUrl;
-            if (processorState.LastGroupSyncCompleted)
+            if (processorState.LastGroupSyncStartedTime == null && processorState.LastGroupSyncCompletedTime != null)
             {
-                this.host.Log(EventLevel.Informational, $"Starting new group synchronization; last synchronization completed at {processorState.LastGroupSyncCompletedTime}");
+                this.logger.Log(EventLevel.Informational, $"Starting new group synchronization; last synchronization completed at {processorState.LastGroupSyncCompletedTime}");
+                processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
             }
             else
             {
                 if (string.IsNullOrWhiteSpace(continuationUrl))
                 {
-                    this.host.Log(EventLevel.Informational, "Starting initial group synchronization");
+                    this.logger.Log(EventLevel.Informational, "Starting initial group synchronization");
+                    processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
                 }
                 else
                 {
-                    this.host.Log(EventLevel.Informational, "Continuing incomplete group synchronization");
+                    this.logger.Log(EventLevel.Informational, $"Continuing incomplete group synchronization started at {processorState.LastGroupSyncStartedTime}");
                 }
             }
             Func<IList<AadGroup>, PagingState, Task> pageHandler = async (groups, state) =>
@@ -115,20 +124,18 @@ namespace GroupFinder.Common
                 }
 
                 // Update the status of the synchronization process.
-                processorState.LastGroupSyncCompleted = false;
                 if (!string.IsNullOrWhiteSpace(state.AadNextLink))
                 {
                     processorState.GroupSyncContinuationUrl = state.AadNextLink;
                 }
                 else if (!string.IsNullOrWhiteSpace(state.AadDeltaLink))
                 {
-                    this.host.Log(EventLevel.Informational, "Synchronization of groups complete");
+                    this.logger.Log(EventLevel.Informational, "Synchronization of groups complete");
                     processorState.GroupSyncContinuationUrl = state.AadDeltaLink;
-                    processorState.LastGroupSyncCompleted = true;
+                    processorState.LastGroupSyncStartedTime = null;
                     processorState.LastGroupSyncCompletedTime = DateTimeOffset.UtcNow;
                 }
-                processorState.StatusMessage = Newtonsoft.Json.JsonConvert.SerializeObject(state);
-                await this.host.SaveProcessorStateAsync(processorState);
+                await this.persistentStorage.SaveAsync(ProcessorStateFileName, processorState);
             };
             await this.graphClient.VisitGroupsAsync(pageHandler, null, continuationUrl);
         }
@@ -150,8 +157,8 @@ namespace GroupFinder.Common
         public async Task<ServiceStatus> GetServiceStatusAsync()
         {
             var searchStatistics = await this.searchService.GetStatisticsAsync();
-            var processorState = await this.host.GetProcessorStateAsync();
-            return new ServiceStatus(searchStatistics, processorState.LastGroupSyncCompletedTime);
+            var processorState = await this.persistentStorage.LoadAsync<ProcessorState>(ProcessorStateFileName);
+            return new ServiceStatus(searchStatistics, processorState.LastGroupSyncStartedTime, processorState.LastGroupSyncCompletedTime);
         }
 
         #endregion

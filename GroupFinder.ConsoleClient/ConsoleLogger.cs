@@ -4,26 +4,16 @@ using System.Diagnostics.Tracing;
 
 namespace GroupFinder.ConsoleClient
 {
-    public class ConsoleLogger : ILogger
+    public class ConsoleLogger : LoggerBase
     {
-        private readonly EventLevel minimumLevel;
-
-        public ConsoleLogger()
-            : this(EventLevel.Verbose)
+        public ConsoleLogger(EventLevel minimumLogLevel)
+            : base(minimumLogLevel)
         {
         }
 
-        public ConsoleLogger(EventLevel minimumLevel)
+        protected override void LogCore(EventLevel level, string message)
         {
-            this.minimumLevel = minimumLevel;
-        }
-
-        public void Log(EventLevel level, string message)
-        {
-            if (level <= this.minimumLevel)
-            {
-                Write(GetConsoleColor(level), message + Environment.NewLine);
-            }
+            Write(GetConsoleColor(level), GetFormattedMessage(level, message) + Environment.NewLine);
         }
 
         private static void Write(ConsoleColor color, string message)

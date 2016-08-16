@@ -37,14 +37,16 @@
     <Compile Include="AadEntity.cs" />
     <Compile Include="AadGraphClient.cs" />
     <Compile Include="AadUser.cs" />
+    <Compile Include="AggregateLogger.cs" />
     <Compile Include="AzureSearchService.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="ErrorInfo.cs" />
     <Compile Include="ErrorMessage.cs" />
     <Compile Include="AadGroup.cs" />
-    <Compile Include="IHost.cs" />
     <Compile Include="ILogger.cs" />
+    <Compile Include="IPersistentStorage.cs" />
     <Compile Include="ISearchService.cs" />
+    <Compile Include="LoggerBase.cs" />
     <Compile Include="NullLogger.cs" />
     <Compile Include="PagingState.cs" />
     <Compile Include="Processor.cs" />
@@ -79,7 +81,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
