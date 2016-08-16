@@ -43,7 +43,18 @@ namespace GroupFinder.ConsoleClient
                     {
                         // Display Status.
                         var status = await processor.GetServiceStatusAsync();
-                        Console.WriteLine("Synchronization Status: " + (status.LastGroupSyncCompletedTime.HasValue ? "Last synchronized on " + status.LastGroupSyncCompletedTime.Value : "Incomplete"));
+                        if (status.LastGroupSyncStartedTime.HasValue)
+                        {
+                            Console.WriteLine($"Synchronization Status: Incomplete - synchronization started {status.LastGroupSyncStartedTime.Value}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Synchronization Status: Not started");
+                        }
+                        if (status.LastGroupSyncCompletedTime.HasValue)
+                        {
+                            Console.WriteLine($"Synchronization Status: Last group synchronization completed {status.LastGroupSyncCompletedTime.Value}");
+                        }
                         Console.WriteLine($"Search Service Status: {status.SearchServiceStatistics.DocumentCount} groups indexed ({status.SearchServiceStatistics.IndexSizeBytes / (1024 * 1024)} MB)");
                     }
                     else if (command == "2")
