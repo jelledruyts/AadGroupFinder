@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common.Logging;
+using GroupFinder.Common.Security;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -15,25 +16,25 @@ namespace GroupFinder.Common.Aad
 
         private readonly ILogger logger;
         private readonly string aadGraphApiTenantEndpoint;
-        private readonly Func<Task<string>> accessTokenFactory;
+        private readonly ITokenProvider tokenProvider;
 
         #endregion
 
         #region Constructors
 
-        public AadGraphClient(ILogger logger, string tenant, Func<Task<string>> accessTokenFactory)
+        public AadGraphClient(ILogger logger, string tenant, ITokenProvider tokenProvider)
         {
             if (string.IsNullOrWhiteSpace(tenant))
             {
                 throw new ArgumentException($"The \"{nameof(tenant)}\" parameter is required.", nameof(tenant));
             }
-            if (accessTokenFactory == null)
+            if (tokenProvider == null)
             {
-                throw new ArgumentNullException(nameof(accessTokenFactory));
+                throw new ArgumentNullException(nameof(tokenProvider));
             }
             this.logger = logger ?? NullLogger.Instance;
             this.aadGraphApiTenantEndpoint = Constants.AadGraphApiEndpoint + tenant;
-            this.accessTokenFactory = accessTokenFactory;
+            this.tokenProvider = tokenProvider;
         }
 
         #endregion
@@ -271,7 +272,7 @@ namespace GroupFinder.Common.Aad
 
         private async Task<HttpClient> GetClientAsync()
         {
-            var accessToken = await accessTokenFactory();
+            var accessToken = await this.tokenProvider.GetAccessTokenAsync();
             var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", "Bearer " + accessToken);
             return client;

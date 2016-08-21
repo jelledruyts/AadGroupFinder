@@ -3,6 +3,7 @@ using GroupFinder.Common.Aad;
 using GroupFinder.Common.Logging;
 using GroupFinder.Common.PersistentStorage;
 using GroupFinder.Common.Search;
+using GroupFinder.Common.Security;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Configuration;
@@ -32,7 +33,22 @@ namespace GroupFinder.ConsoleClient
             var logger = new AggregateLogger(new ILogger[] { new ConsoleLogger(EventLevel.Informational), new TraceLogger(EventLevel.Verbose) });
             try
             {
-                var processor = GetProcessor(logger);
+                var aadTenant = ConfigurationManager.AppSettings["AadTenant"];
+                var aadClientId = ConfigurationManager.AppSettings["AadClientId"];
+                var aadClientRedirectUri = new Uri(ConfigurationManager.AppSettings["AadClientRedirectUri"]);
+                var azureSearchService = ConfigurationManager.AppSettings["AzureSearchService"];
+                var azureSearchIndex = ConfigurationManager.AppSettings["AzureSearchIndex"];
+                var azureSearchAdminKey = ConfigurationManager.AppSettings["AzureSearchAdminKey"];
+                var azureStorageAccount = ConfigurationManager.AppSettings["AzureStorageAccount"];
+                var azureStorageContainer = ConfigurationManager.AppSettings["AzureStorageContainer"];
+                var azureStorageKey = ConfigurationManager.AppSettings["AzureStorageKey"];
+
+                var tokenProvider = new AdalInteractiveTokenProvider(aadTenant, aadClientId, TokenCache.DefaultShared, aadClientRedirectUri);
+                var graphClient = new AadGraphClient(logger, aadTenant, tokenProvider);
+                var persistentStorage = new AzureBlobStorage(logger, azureStorageAccount, azureStorageContainer, azureStorageKey);
+                var searchService = new AzureSearchService(logger, azureSearchService, azureSearchIndex, azureSearchAdminKey);
+                var processor = new Processor(logger, persistentStorage, graphClient, searchService);
+
                 while (true)
                 {
                     Console.WriteLine("What do you want to do?");
@@ -41,24 +57,27 @@ namespace GroupFinder.ConsoleClient
                     Console.WriteLine("  3 - Find Users");
                     Console.WriteLine("  4 - Find Groups");
                     Console.WriteLine("  5 - Find Shared Group Memberships");
+                    Console.WriteLine("  6 - Prime ADAL Token Cache");
                     Console.WriteLine("  Q - Quit");
                     var command = Console.ReadLine().ToUpperInvariant();
                     if (command == "1")
                     {
                         // Display Status.
                         var status = await processor.GetServiceStatusAsync();
+                        var groupSyncStatus = "Group Sync Status: ";
                         if (status.LastGroupSyncStartedTime.HasValue)
                         {
-                            Console.WriteLine($"Synchronization Status: Incomplete - synchronization started {status.LastGroupSyncStartedTime.Value}");
+                            groupSyncStatus += $"In progress; sync started {status.LastGroupSyncStartedTime.Value}";
                         }
                         else
                         {
-                            Console.WriteLine("Synchronization Status: Not started");
+                            groupSyncStatus += "Inactive";
                         }
                         if (status.LastGroupSyncCompletedTime.HasValue)
                         {
-                            Console.WriteLine($"Synchronization Status: Last group synchronization completed {status.LastGroupSyncCompletedTime.Value}");
+                            groupSyncStatus += $"; last sync completed {status.LastGroupSyncCompletedTime.Value}";
                         }
+                        Console.WriteLine(groupSyncStatus);
                         Console.WriteLine($"Search Service Status: {status.SearchServiceStatistics.DocumentCount} groups indexed ({status.SearchServiceStatistics.IndexSizeBytes / (1024 * 1024)} MB)");
                     }
                     else if (command == "2")
@@ -116,6 +135,15 @@ namespace GroupFinder.ConsoleClient
                         }
                         Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) in {stopwatch.ElapsedMilliseconds} ms");
                     }
+                    else if (command == "6")
+                    {
+                        Console.WriteLine("Enter the file name of the cache:");
+                        var fileName = Console.ReadLine();
+                        var cache = new PersistentStorageTokenCache(logger, persistentStorage, fileName);
+                        var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + aadTenant, true, cache);
+                        var authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, aadClientId, aadClientRedirectUri, new PlatformParameters(PromptBehavior.Auto));
+                        var token = authenticationResult.AccessToken;
+                    }
                     else
                     {
                         break;
@@ -126,47 +154,6 @@ namespace GroupFinder.ConsoleClient
             {
                 logger.Log(EventLevel.Critical, exc.ToString());
             }
-        }
-
-        private static Processor GetProcessor(ILogger logger)
-        {
-            var aadTenant = ConfigurationManager.AppSettings["AadTenant"];
-            var aadClientId = ConfigurationManager.AppSettings["AadClientId"];
-            var aadClientRedirectUri = new Uri(ConfigurationManager.AppSettings["AadClientRedirectUri"]);
-            var aadClientSecret = ConfigurationManager.AppSettings["AadClientSecret"];
-            var azureSearchService = ConfigurationManager.AppSettings["AzureSearchService"];
-            var azureSearchIndex = ConfigurationManager.AppSettings["AzureSearchIndex"];
-            var azureSearchAdminKey = ConfigurationManager.AppSettings["AzureSearchAdminKey"];
-            var azureStorageAccount = ConfigurationManager.AppSettings["AzureStorageAccount"];
-            var azureStorageContainer = ConfigurationManager.AppSettings["AzureStorageContainer"];
-            var azureStorageKey = ConfigurationManager.AppSettings["AzureStorageKey"];
-
-            var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + aadTenant, false);
-            var clientCredential = default(ClientCredential);
-            if (!string.IsNullOrWhiteSpace(aadClientSecret))
-            {
-                clientCredential = new ClientCredential(aadClientId, aadClientSecret);
-            }
-            Func<Task<string>> accessTokenFactory = async () =>
-            {
-                var authenticationResult = default(AuthenticationResult);
-                if (clientCredential != null)
-                {
-                    logger.Log(EventLevel.Verbose, $"Acquiring access token from client credentials grant");
-                    authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, clientCredential);
-                }
-                else
-                {
-                    logger.Log(EventLevel.Verbose, $"Acquiring access token from end user grant");
-                    authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, aadClientId, aadClientRedirectUri, new PlatformParameters(PromptBehavior.Auto));
-                }
-                return authenticationResult.AccessToken;
-            };
-
-            var graphClient = new AadGraphClient(logger, aadTenant, accessTokenFactory);
-            var persistentStorage = new AzureBlobStorage(logger, azureStorageAccount, azureStorageContainer, azureStorageKey);
-            var searchService = new AzureSearchService(logger, azureSearchService, azureSearchIndex, azureSearchAdminKey);
-            return new Processor(logger, persistentStorage, graphClient, searchService);
         }
     }
 }

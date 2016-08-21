@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("GroupFinder.Common")]
+[assembly: AssemblyProduct("GroupFinder")]
 [assembly: AssemblyCopyright("Copyright © Jelle Druyts 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

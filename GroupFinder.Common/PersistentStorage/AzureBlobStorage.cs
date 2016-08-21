@@ -3,6 +3,7 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace GroupFinder.Common.PersistentStorage
@@ -40,24 +41,34 @@ namespace GroupFinder.Common.PersistentStorage
 
         #region Overrides
 
-        protected override async Task<string> LoadCoreAsync(string fileName)
+        protected override async Task<byte[]> LoadCoreAsync(string fileName)
         {
             await EnsureInitialized();
             var blob = this.blobContainer.GetBlockBlobReference(fileName);
-            var fileContents = default(string);
             var exists = await blob.ExistsAsync();
             if (exists)
             {
-                return await blob.DownloadTextAsync();
+                using (var stream = new MemoryStream())
+                {
+                    await blob.DownloadToStreamAsync(stream);
+                    return stream.GetBuffer();
+                }
             }
-            return fileContents;
+            return null;
         }
 
-        protected override async Task SaveCoreAsync(string fileName, string fileContents)
+        protected override async Task SaveCoreAsync(string fileName, byte[] fileContents)
         {
             await EnsureInitialized();
             var blob = this.blobContainer.GetBlockBlobReference(fileName);
-            await blob.UploadTextAsync(fileContents);
+            await blob.UploadFromByteArrayAsync(fileContents, 0, fileContents.Length);
+        }
+
+        protected override async Task DeleteCoreAsync(string fileName)
+        {
+            await EnsureInitialized();
+            var blob = this.blobContainer.GetBlockBlobReference(fileName);
+            await blob.DeleteIfExistsAsync();
         }
 
         #endregion

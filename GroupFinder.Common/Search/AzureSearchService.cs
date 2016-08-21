@@ -133,8 +133,6 @@ namespace GroupFinder.Common.Search
                 return doc;
             }));
             await this.indexClient.Documents.IndexAsync(batch);
-            var statistics = await this.GetStatisticsAsync();
-            this.logger.Log(EventLevel.Informational, $"Current index statistics: {statistics.DocumentCount} documents ({statistics.IndexSizeBytes / (1024 * 1024)} MB)");
         }
 
         public async Task UpdateGroupAsync(string objectId, IList<string> tags)
