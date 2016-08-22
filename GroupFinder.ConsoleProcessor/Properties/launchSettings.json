@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GroupFinder.ConsoleProcessor": {
+      "commandName": "Project",
+      "commandLineArgs": "/interactive"
+    }
+  }
+}

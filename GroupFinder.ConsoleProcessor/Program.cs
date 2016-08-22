@@ -6,8 +6,11 @@ using GroupFinder.Common.PersistentStorage;
 using GroupFinder.Common.Search;
 using GroupFinder.Common.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace GroupFinder.ConsoleProcessor
@@ -18,7 +21,8 @@ namespace GroupFinder.ConsoleProcessor
         {
             try
             {
-                Run().Wait();
+                var interactive = (args != null && args.Any(a => string.Equals(a, "/interactive", StringComparison.OrdinalIgnoreCase)));
+                Run(interactive).Wait();
                 return 0;
             }
             catch (Exception exc)
@@ -28,7 +32,7 @@ namespace GroupFinder.ConsoleProcessor
             }
         }
 
-        public static async Task Run()
+        public static async Task Run(bool interactive)
         {
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
@@ -38,7 +42,6 @@ namespace GroupFinder.ConsoleProcessor
 #endif
             var configuration = builder.Build();
             var appConfig = new AppConfiguration();
-            configuration.Bind(appConfig);
             configuration.GetSection("App").Bind(appConfig);
 
             var logger = new AggregateLogger(new ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
@@ -52,13 +55,153 @@ namespace GroupFinder.ConsoleProcessor
 
             var processor = new Processor(logger, persistentStorage, graphClient, searchService);
 
+            if (interactive)
+            {
+                // Interactive mode: prompt for action.
+                while (true)
+                {
+                    Console.WriteLine("What do you want to do?");
+                    Console.WriteLine("  1 - Display Status");
+                    Console.WriteLine("  2 - Synchronize Groups");
+                    Console.WriteLine("  3 - Find Users");
+                    Console.WriteLine("  4 - Find Groups");
+                    Console.WriteLine("  5 - Find Shared Group Memberships");
+                    Console.WriteLine("  6 - Prime ADAL Token Cache");
+                    var command = Console.ReadLine().ToUpperInvariant();
+                    if (command == "1")
+                    {
+                        await DisplayStatusAsync(processor);
+                    }
+                    else if (command == "2")
+                    {
+                        await SynchronizeGroupsOnceAsync(processor);
+                    }
+                    else if (command == "3")
+                    {
+                        await FindUsersAsync(processor);
+                    }
+                    else if (command == "4")
+                    {
+                        await FindGroupsAsync(processor);
+                    }
+                    else if (command == "5")
+                    {
+                        await FindSharedGroupMembershipsAsync(processor);
+                    }
+                    else if (command == "6")
+                    {
+                        await PrimeAdalCacheAsync(logger, persistentStorage, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, appConfig.AzureAD.RedirectUri);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // Non-interactive mode: continuously synchronize groups.
+                await SynchronizeGroupsContinuouslyAsync(logger, processor, appConfig.Processor.GroupSyncWaitTime);
+            }
+        }
+
+        #region Commands
+
+        private static async Task DisplayStatusAsync(Processor processor)
+        {
+            var status = await processor.GetServiceStatusAsync();
+            var groupSyncStatus = "Group Sync Status: ";
+            if (status.LastGroupSyncStartedTime.HasValue)
+            {
+                groupSyncStatus += $"In progress; sync started {status.LastGroupSyncStartedTime.Value}";
+            }
+            else
+            {
+                groupSyncStatus += "Inactive";
+            }
+            if (status.LastGroupSyncCompletedTime.HasValue)
+            {
+                groupSyncStatus += $"; last sync completed {status.LastGroupSyncCompletedTime.Value}";
+            }
+            Console.WriteLine(groupSyncStatus);
+            Console.WriteLine($"Search Service Status: {status.SearchServiceStatistics.DocumentCount} groups indexed ({status.SearchServiceStatistics.IndexSizeBytes / (1024 * 1024)} MB)");
+        }
+
+        private static async Task SynchronizeGroupsOnceAsync(Processor processor)
+        {
+            await processor.SynchronizeGroupsAsync();
+        }
+
+        private static async Task SynchronizeGroupsContinuouslyAsync(ILogger logger, Processor processor, TimeSpan waitTime)
+        {
             while (true)
             {
-                await processor.SynchronizeGroupsAsync();
-                var waitTime = appConfig.Processor.GroupSyncWaitTime;
+                await SynchronizeGroupsOnceAsync(processor);
                 logger.Log(EventLevel.Informational, $"Waiting {waitTime} to start next group synchronization");
                 await Task.Delay(waitTime);
             }
         }
+
+        private static async Task FindUsersAsync(Processor processor)
+        {
+            Console.WriteLine("Enter search text:");
+            var searchText = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var users = await processor.FindUsersAsync(searchText);
+            stopwatch.Stop();
+
+            var index = 0;
+            foreach (var user in users)
+            {
+                Console.WriteLine($"  {++index}: {user.DisplayName} ({user.UserPrincipalName})");
+            }
+            Console.WriteLine($"Found {users.Count} user(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task FindGroupsAsync(Processor processor)
+        {
+            Console.WriteLine("Enter search text:");
+            var searchText = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var groups = await processor.FindGroupsAsync(searchText, 10, 0);
+            stopwatch.Stop();
+
+            var index = 0;
+            foreach (var group in groups)
+            {
+                Console.WriteLine($"  {++index} ({group.Score}): {group.DisplayName} ({group.Mail})");
+            }
+            Console.WriteLine($"Found {groups.Count} group(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task FindSharedGroupMembershipsAsync(Processor processor)
+        {
+            Console.WriteLine("Enter user UPN's separated with semicolons (e.g. 'john@example.org; jane@example.org'):");
+            var upns = Console.ReadLine().Split(';').Select(u => u.Trim()).ToArray();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var sharedGroups = await processor.FindSharedGroupMembershipsAsync(upns);
+            stopwatch.Stop();
+
+            foreach (var sharedGroup in sharedGroups.Where(s => s.UserIds.Count > 1))
+            {
+                Console.WriteLine($"  {sharedGroup.PercentMatch.ToString("P0")}: \"{sharedGroup.Group.DisplayName}\" ({string.Join(";", sharedGroup.UserIds)})");
+            }
+            Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task PrimeAdalCacheAsync(ILogger logger, IPersistentStorage persistentStorage, string tenant, string clientId, Uri redirectUri)
+        {
+            Console.WriteLine("Enter the file name of the cache:");
+            var fileName = Console.ReadLine();
+            var cache = new PersistentStorageTokenCache(logger, persistentStorage, fileName);
+            var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + tenant, true, cache);
+            var authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, clientId, redirectUri, new PlatformParameters(PromptBehavior.Auto));
+            var token = authenticationResult.AccessToken;
+        }
+
+        #endregion
     }
 }
