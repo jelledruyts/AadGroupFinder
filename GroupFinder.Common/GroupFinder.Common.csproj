@@ -104,6 +104,8 @@
     <Compile Include="Configuration\AzureSearchConfiguration.cs" />
     <Compile Include="Configuration\AzureStorageConfiguration.cs" />
     <Compile Include="Configuration\ProcessorConfiguration.cs" />
+    <Compile Include="IAnnotatedGroup.cs" />
+    <Compile Include="IGroupAnnotation.cs" />
     <Compile Include="IGroup.cs" />
     <Compile Include="IGroupSearchResult.cs" />
     <Compile Include="IUser.cs" />

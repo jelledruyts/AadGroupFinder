@@ -45,15 +45,16 @@ namespace GroupFinder.ConsoleProcessor
             configuration.GetSection("App").Bind(appConfig);
 
             var logger = new AggregateLogger(new ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
-            var persistentStorage = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.Container, appConfig.AzureStorage.AdminKey);
+            var persistentStorageForState = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.StateContainer, appConfig.AzureStorage.AdminKey);
+            var persistentStorageForBackups = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.BackupContainer, appConfig.AzureStorage.AdminKey);
             var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey);
 
-            var cache = new PersistentStorageTokenCache(logger, persistentStorage, appConfig.AzureAD.TokenCacheFileName);
+            var cache = new PersistentStorageTokenCache(logger, persistentStorageForState, appConfig.AzureAD.TokenCacheFileName);
             await cache.LoadAsync();
             var tokenProvider = new AdalSilentTokenProvider(appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, cache);
             var graphClient = new AadGraphClient(logger, appConfig.AzureAD.Tenant, tokenProvider);
 
-            var processor = new Processor(logger, persistentStorage, graphClient, searchService);
+            var processor = new Processor(logger, persistentStorageForState, persistentStorageForBackups, graphClient, searchService);
 
             if (interactive)
             {
@@ -90,7 +91,7 @@ namespace GroupFinder.ConsoleProcessor
                     }
                     else if (command == "6")
                     {
-                        await PrimeAdalCacheAsync(logger, persistentStorage, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, appConfig.AzureAD.RedirectUri);
+                        await PrimeAdalCacheAsync(logger, persistentStorageForState, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, appConfig.AzureAD.RedirectUri);
                     }
                     else
                     {
@@ -124,7 +125,7 @@ namespace GroupFinder.ConsoleProcessor
                 groupSyncStatus += $"; last sync completed {status.LastGroupSyncCompletedTime.Value}";
             }
             Console.WriteLine(groupSyncStatus);
-            Console.WriteLine($"Search Service Status: {status.SearchServiceStatistics.DocumentCount} groups indexed ({status.SearchServiceStatistics.IndexSizeBytes / (1024 * 1024)} MB)");
+            Console.WriteLine($"Search Service Status: {status.GroupCount} groups indexed ({status.GroupSearchIndexSizeBytes / (1024 * 1024)} MB)");
         }
 
         private static async Task SynchronizeGroupsOnceAsync(Processor processor)

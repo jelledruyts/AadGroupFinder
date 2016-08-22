@@ -16,7 +16,8 @@ namespace GroupFinder.Common
 
         private const string ProcessorStateFileName = "GroupFinder.ProcessorState.json";
         private readonly ILogger logger;
-        private readonly IPersistentStorage persistentStorage;
+        private readonly IPersistentStorage persistentStorageForState;
+        private readonly IPersistentStorage persistentStorageForBackups;
         private readonly AadGraphClient graphClient;
         private readonly ISearchService searchService;
 
@@ -24,15 +25,15 @@ namespace GroupFinder.Common
 
         #region Constructors
 
-        public Processor(ILogger logger, IPersistentStorage persistentStorage, AadGraphClient graphClient, ISearchService searchService)
+        public Processor(ILogger logger, IPersistentStorage persistentStorageForState, IPersistentStorage persistentStorageForBackups, AadGraphClient graphClient, ISearchService searchService)
         {
             if (logger == null)
             {
                 throw new ArgumentNullException(nameof(logger));
             }
-            if (persistentStorage == null)
+            if (persistentStorageForState == null)
             {
-                throw new ArgumentNullException(nameof(persistentStorage));
+                throw new ArgumentNullException(nameof(persistentStorageForState));
             }
             if (graphClient == null)
             {
@@ -43,7 +44,8 @@ namespace GroupFinder.Common
                 throw new ArgumentNullException(nameof(searchService));
             }
             this.logger = logger;
-            this.persistentStorage = persistentStorage;
+            this.persistentStorageForState = persistentStorageForState;
+            this.persistentStorageForBackups = persistentStorageForBackups;
             this.graphClient = graphClient;
             this.searchService = searchService;
         }
@@ -93,7 +95,7 @@ namespace GroupFinder.Common
 
         public async Task SynchronizeGroupsAsync()
         {
-            var processorState = await this.persistentStorage.LoadAsync<ProcessorState>(ProcessorStateFileName);
+            var processorState = await this.persistentStorageForState.LoadAsync<ProcessorState>(ProcessorStateFileName);
             var continuationUrl = processorState.GroupSyncContinuationUrl;
             if (processorState.LastGroupSyncStartedTime == null && processorState.LastGroupSyncCompletedTime != null)
             {
@@ -139,19 +141,29 @@ namespace GroupFinder.Common
                     processorState.LastGroupSyncStartedTime = null;
                     processorState.LastGroupSyncCompletedTime = DateTimeOffset.UtcNow;
                 }
-                await this.persistentStorage.SaveAsync(ProcessorStateFileName, processorState);
+                await this.persistentStorageForState.SaveAsync(ProcessorStateFileName, processorState);
             };
             await this.graphClient.VisitGroupsAsync(pageHandler, null, continuationUrl);
         }
 
-        public Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
+        public Task<IAnnotatedGroup> GetGroupAsync(string objectId)
         {
-            return this.searchService.FindGroupsAsync(searchText, pageSize, pageIndex);
+            return this.searchService.GetGroupAsync(objectId);
         }
 
-        public Task UpdateGroupAsync(string objectId, IList<string> tags)
+        public Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip)
         {
-            return this.searchService.UpdateGroupAsync(objectId, tags);
+            return this.searchService.FindGroupsAsync(searchText, top, skip);
+        }
+
+        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes)
+        {
+            await this.searchService.UpdateGroupAsync(objectId, tags, notes);
+            if (this.persistentStorageForBackups != null)
+            {
+                var backupData = new GroupBackup(objectId, tags, notes);
+                await this.persistentStorageForBackups.SaveAsync($"groups/{objectId}.json", backupData);
+            }
         }
 
         #endregion
@@ -161,8 +173,30 @@ namespace GroupFinder.Common
         public async Task<ServiceStatus> GetServiceStatusAsync()
         {
             var searchStatistics = await this.searchService.GetStatisticsAsync();
-            var processorState = await this.persistentStorage.LoadAsync<ProcessorState>(ProcessorStateFileName);
-            return new ServiceStatus(searchStatistics, processorState.LastGroupSyncStartedTime, processorState.LastGroupSyncCompletedTime);
+            var processorState = await this.persistentStorageForState.LoadAsync<ProcessorState>(ProcessorStateFileName);
+            return new ServiceStatus(searchStatistics.DocumentCount, searchStatistics.IndexSizeBytes, processorState.LastGroupSyncStartedTime, processorState.LastGroupSyncCompletedTime);
+        }
+
+        #endregion
+
+        #region GroupBackup Class
+
+        private class GroupBackup : IGroupAnnotation
+        {
+            public string ObjectId { get; set; }
+            public IList<string> Tags { get; set; }
+            public string Notes { get; set; }
+
+            public GroupBackup()
+            {
+            }
+
+            public GroupBackup(string objectId, IList<string> tags, string notes)
+            {
+                this.ObjectId = objectId;
+                this.Tags = tags;
+                this.Notes = notes;
+            }
         }
 
         #endregion

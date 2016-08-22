@@ -13,14 +13,15 @@ namespace GroupFinder.Common.Search
     {
         #region Constants
 
-        private const string FieldNameObjectId = "objectId";
-        private const string FieldNameDisplayName = "displayName";
-        private const string FieldNameDescription = "description";
-        private const string FieldNameMail = "mail";
-        private const string FieldNameMailEnabled = "mailEnabled";
-        private const string FieldNameMailNickname = "mailNickname";
-        private const string FieldNameSecurityEnabled = "securityEnabled";
-        private const string FieldNameTags = "tags";
+        internal const string FieldNameObjectId = "objectId";
+        internal const string FieldNameDisplayName = "displayName";
+        internal const string FieldNameDescription = "description";
+        internal const string FieldNameMail = "mail";
+        internal const string FieldNameMailEnabled = "mailEnabled";
+        internal const string FieldNameMailNickname = "mailNickname";
+        internal const string FieldNameSecurityEnabled = "securityEnabled";
+        internal const string FieldNameTags = "tags";
+        internal const string FieldNameNotes = "notes";
         private const string ScoringProfileName = "name";
         public const string SuggesterName = "name";
 
@@ -77,7 +78,8 @@ namespace GroupFinder.Common.Search
                     new Field(FieldNameMailEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
                     new Field(FieldNameMailNickname, DataType.String, analyzerName) { IsSearchable = true },
                     new Field(FieldNameSecurityEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
-                    new Field(FieldNameTags, DataType.Collection(DataType.String), analyzerName) { IsSearchable = true, IsFacetable = true, IsFilterable = true }
+                    new Field(FieldNameTags, DataType.Collection(DataType.String), analyzerName) { IsSearchable = true, IsFacetable = true, IsFilterable = true },
+                    new Field(FieldNameNotes, DataType.String, analyzerName) { IsSearchable = true }
                 },
                 Suggesters = new[]
                 {
@@ -88,8 +90,8 @@ namespace GroupFinder.Common.Search
                 {
                     new ScoringProfile(ScoringProfileName)
                     {
-                        // Add a lot of weight to the display name and above average weight to the tags as well.
-                        TextWeights = new TextWeights(new Dictionary<string, double> { { FieldNameDisplayName, 2.0 }, { FieldNameTags, 1.5 } })
+                        // Add a lot of weight to the display name and above average weight to the tags and notes as well.
+                        TextWeights = new TextWeights(new Dictionary<string, double> { { FieldNameDisplayName, 2.0 }, { FieldNameTags, 1.5 }, { FieldNameNotes, 1.5 } })
                     }
                 }
             };
@@ -135,7 +137,7 @@ namespace GroupFinder.Common.Search
             await this.indexClient.Documents.IndexAsync(batch);
         }
 
-        public async Task UpdateGroupAsync(string objectId, IList<string> tags)
+        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes)
         {
             if (string.IsNullOrWhiteSpace(objectId))
             {
@@ -146,6 +148,7 @@ namespace GroupFinder.Common.Search
             var document = new Document();
             document[FieldNameObjectId] = objectId;
             document[FieldNameTags] = tags ?? new string[0];
+            document[FieldNameNotes] = notes;
             var batch = IndexBatch.Merge(new[] { document });
             await this.indexClient.Documents.IndexAsync(batch);
         }
@@ -168,9 +171,21 @@ namespace GroupFinder.Common.Search
 
         #endregion
 
-        #region Find Groups
+        #region Get & Find Groups
 
-        public async Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int pageSize, int pageIndex)
+        public async Task<IAnnotatedGroup> GetGroupAsync(string objectId)
+        {
+            if (string.IsNullOrWhiteSpace(objectId))
+            {
+                throw new ArgumentException($"The \"{nameof(objectId)}\" parameter is required.", nameof(objectId));
+            }
+            await EnsureInitialized();
+            this.logger.Log(EventLevel.Informational, $"Retrieving group \"{objectId}\"");
+            var result = await this.indexClient.Documents.GetAsync(objectId);
+            return new SearchGroup(0.0, result);
+        }
+
+        public async Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
@@ -180,26 +195,15 @@ namespace GroupFinder.Common.Search
             this.logger.Log(EventLevel.Informational, $"Searching for \"{searchText}\"");
             var parameters = new SearchParameters
             {
-                Top = pageSize,
-                Skip = pageSize * pageIndex
+                Top = top,
+                Skip = skip
             };
             var result = await this.indexClient.Documents.SearchAsync(searchText, parameters);
             this.logger.Log(EventLevel.Informational, $"Search for \"{searchText}\" resulted in {result.Results.Count} results");
             var groups = new List<IGroupSearchResult>();
             foreach (var documentResult in result.Results)
             {
-                groups.Add(new SearchGroup
-                {
-                    Score = documentResult.Score,
-                    Tags = (IList<string>)documentResult.Document[FieldNameTags],
-                    ObjectId = (string)documentResult.Document[FieldNameObjectId],
-                    DisplayName = (string)documentResult.Document[FieldNameDisplayName],
-                    Description = (string)documentResult.Document[FieldNameDescription],
-                    Mail = (string)documentResult.Document[FieldNameMail],
-                    MailEnabled = (bool)documentResult.Document[FieldNameMailEnabled],
-                    MailNickname = (string)documentResult.Document[FieldNameMailNickname],
-                    SecurityEnabled = (bool)documentResult.Document[FieldNameSecurityEnabled]
-                });
+                groups.Add(new SearchGroup(documentResult.Score, documentResult.Document));
             }
             return groups;
         }

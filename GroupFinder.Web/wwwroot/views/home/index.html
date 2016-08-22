@@ -1,0 +1,39 @@
+﻿<h1>Find Groups</h1>
+<form>
+    <div class="input-group margin-bottom-md">
+        <input type="search" class="form-control" placeholder="Enter your search text..." ng-model="searchText">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="button" ng-click="findGroups()">Search</button>
+        </span>
+    </div>
+    <div class="alert alert-info" ng-show="isBusy"><i class="fa fa-spinner fa-spin" /> Working on it...</div>
+    <div class="alert alert-danger" ng-show="message">{{message}}</div>
+    <nav aria-label="Page navigation" ng-show="canPageBackward || canPageForward">
+        <ul class="pagination">
+            <li ng-class="{disabled: !canPageBackward}">
+                <a aria-label="Previous" ng-click="pageBackward()" title="Previous"><span aria-hidden="true">&laquo;</span></a>
+            </li>
+            <li class="disabled"><a class="text-small">Page {{pageIndex + 1}}</a></li>
+            <li ng-class="{disabled: !canPageForward}">
+                <a aria-label="Next" ng-click="pageForward()" title="Next"><span aria-hidden="true">&raquo;</span></a>
+            </li>
+        </ul>
+    </nav>
+    <div ng-show="groups.length > 0">
+        <ol class="list-group">
+            <li class="list-group-item" ng-repeat="group in groups">
+                <h4 class="list-group-item-heading">{{group.displayName}}</h4>
+                <div class="list-group-item-text"><a ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" /> {{group.mail}}</a></div>
+                <div class="list-group-item-text margin-top-md" ng-show="group.description.length > 0">{{group.description}}</div>
+                <div class="margin-top-md" ng-show="group.tags.length > 0">
+                    <ul class="list-inline list-unstyled tag-list">
+                        <li ng-repeat="tag in group.tags">
+                            <span class="label label-primary tag">{{tag}}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="margin-top-md text-muted" ng-show="group.notes.length > 0"><em>{{group.notes}}</em></div>
+            </li>
+        </ol>
+    </div>
+</form>

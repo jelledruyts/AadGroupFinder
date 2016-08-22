@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace GroupFinder.Common.Search
 {
@@ -7,6 +8,7 @@ namespace GroupFinder.Common.Search
         // Search-specific properties.
         public double Score { get; set; }
         public IList<string> Tags { get; set; }
+        public string Notes { get; set; }
 
         // Base properties.
         public string ObjectId { get; set; }
@@ -16,5 +18,23 @@ namespace GroupFinder.Common.Search
         public bool MailEnabled { get; set; }
         public string MailNickname { get; set; }
         public bool SecurityEnabled { get; set; }
+
+        public SearchGroup(double score, IDictionary<string, object> properties)
+        {
+            if (properties == null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+            this.Score = score;
+            this.Tags = (IList<string>)properties[AzureSearchService.FieldNameTags];
+            this.Notes = (string)properties[AzureSearchService.FieldNameNotes];
+            this.ObjectId = (string)properties[AzureSearchService.FieldNameObjectId];
+            this.DisplayName = (string)properties[AzureSearchService.FieldNameDisplayName];
+            this.Description = (string)properties[AzureSearchService.FieldNameDescription];
+            this.Mail = (string)properties[AzureSearchService.FieldNameMail];
+            this.MailEnabled = (bool)properties[AzureSearchService.FieldNameMailEnabled];
+            this.MailNickname = (string)properties[AzureSearchService.FieldNameMailNickname];
+            this.SecurityEnabled = (bool)properties[AzureSearchService.FieldNameSecurityEnabled];
+        }
     }
 }

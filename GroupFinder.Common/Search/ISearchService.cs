@@ -9,7 +9,8 @@ namespace GroupFinder.Common.Search
         Task<SearchServiceStatistics> GetStatisticsAsync();
         Task UpsertGroupsAsync(IEnumerable<IGroup> groups);
         Task DeleteGroupsAsync(IEnumerable<string> objectId);
-        Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int pageSize, int pageIndex);
-        Task UpdateGroupAsync(string objectId, IList<string> tags);
+        Task<IAnnotatedGroup> GetGroupAsync(string objectId);
+        Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip);
+        Task UpdateGroupAsync(string objectId, IList<string> tags, string notes);
     }
 }

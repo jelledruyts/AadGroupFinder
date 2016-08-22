@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-
-namespace GroupFinder.Common
+﻿namespace GroupFinder.Common
 {
-    public interface IGroupSearchResult : IGroup
+    public interface IGroupSearchResult : IAnnotatedGroup
     {
         double Score { get; set; }
-        IList<string> Tags { get; set; }
     }
 }
