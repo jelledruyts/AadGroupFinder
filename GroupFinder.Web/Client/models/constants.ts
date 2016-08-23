@@ -8,7 +8,7 @@
         public static ControllerNames = {
             Root: "rootCtrl",
             Home: "homeCtrl",
-            Status: "statusCtrl"
+            About: "aboutCtrl"
         };
         public static ServiceNames = {
             Angelia: "angeliaSvc"

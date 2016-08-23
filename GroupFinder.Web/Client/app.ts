@@ -7,13 +7,13 @@ module app {
             // Configure the routes.
             $routeProvider
                 .when("/", {
-                    templateUrl: "views/home/index.html",
+                    templateUrl: "views/home/groups.html",
                     controller: app.models.Constants.ControllerNames.Home,
                     requireADLogin: true
                 })
-                .when("/status", {
-                    templateUrl: "views/home/status.html",
-                    controller: app.models.Constants.ControllerNames.Status,
+                .when("/about", {
+                    templateUrl: "views/home/about.html",
+                    controller: app.models.Constants.ControllerNames.About,
                     requireADLogin: true
                 })
                 .otherwise({ redirectTo: "/" });
@@ -28,4 +28,12 @@ module app {
                 $httpProvider
             );
         }]);
+
+    // Fix for Bootstrap menu not auto-closing on collapsed view.
+    // See http://stackoverflow.com/questions/21203111/bootstrap-3-collapsed-menu-doesnt-close-on-click
+    $(document).on("click", ".navbar-collapse.in", function (e) {
+        if ($(e.target).is("a") && $(e.target).attr("class") != "dropdown-toggle") {
+            $(this).collapse("hide");
+        }
+    });
 }

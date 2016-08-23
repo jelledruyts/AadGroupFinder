@@ -3,19 +3,18 @@
 module app.controllers {
     "use strict";
 
-    interface IStatusScope extends ng.IScope {
+    interface IAboutScope extends ng.IScope {
         status: app.models.ServiceStatus;
         refreshStatus(): void;
     }
 
-    class StatusCtrl {
+    class AboutCtrl {
         static $inject = ["$scope", "$rootScope", "angeliaSvc"];
-        constructor(private $scope: IStatusScope, private $rootScope: IRootScope, private angeliaSvc: app.services.AngeliaSvc) {
+        constructor(private $scope: IAboutScope, private $rootScope: IRootScope, private angeliaSvc: app.services.AngeliaSvc) {
             this.$scope.status = null;
 
             var refreshStatusInternal = function () {
                 $rootScope.clearMessages();
-                $rootScope.startBusy();
                 angeliaSvc.getStatus()
                     .success(results => {
                         $scope.status = results;
@@ -24,7 +23,6 @@ module app.controllers {
                         $rootScope.setError();
                     })
                     .finally(() => {
-                        $rootScope.stopBusy();
                     });
             }
 
@@ -36,5 +34,5 @@ module app.controllers {
         }
     }
 
-    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Status, StatusCtrl);
+    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.About, AboutCtrl);
 }
