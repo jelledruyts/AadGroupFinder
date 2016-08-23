@@ -28,13 +28,18 @@
                     <li ng-class="{ active: isActive('/status') }"><a href="#/status">Status</a></li>
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li><a class="btn btn-link" ng-show="userInfo.isAuthenticated" ng-click="logout()">Logout</a></li>
+                    <li><a class="btn btn-link ng-cloak" ng-show="userInfo.isAuthenticated" ng-click="logout()">Logout</a></li>
                 </ul>
             </div>
         </div>
     </div>
     <div class="container body-content">
-        <div id="content" ng-view></div>
+        <div class="alert alert-info ng-cloak" ng-show="isBusy"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{busyMessage}}</div>
+        <div class="alert alert-danger ng-cloak" ng-show="errorMessage !== null">{{errorMessage}}</div>
+        <div class="alert alert-warning ng-cloak" ng-show="warningMessage !== null">{{warningMessage}}</div>
+        <div class="alert alert-success ng-cloak" ng-show="successMessage !== null">{{successMessage}}</div>
+        <div class="alert alert-info ng-cloak" ng-show="infoMessage !== null">{{infoMessage}}</div>
+        <div id="content" class="ng-cloak" ng-view></div>
     </div>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>

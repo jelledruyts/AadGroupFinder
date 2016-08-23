@@ -1,13 +1,11 @@
-﻿<h1>Find Groups</h1>
+﻿<h2>Find Groups</h2>
 <form>
     <div class="input-group margin-bottom-md">
-        <input type="search" class="form-control" placeholder="Enter your search text..." ng-model="searchText">
+        <input type="search" class="form-control" placeholder="Enter your search text..." ng-model="searchText" ng-keyup="$event.keyCode === 13 && findGroups()">
         <span class="input-group-btn">
-            <button class="btn btn-primary" type="button" ng-click="findGroups()">Search</button>
+            <button class="btn btn-primary" type="button" ng-click="findGroups()"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
         </span>
     </div>
-    <div class="alert alert-info" ng-show="isBusy"><i class="fa fa-spinner fa-spin" /> Working on it...</div>
-    <div class="alert alert-danger" ng-show="message">{{message}}</div>
     <nav aria-label="Page navigation" ng-show="canPageBackward || canPageForward">
         <ul class="pagination">
             <li ng-class="{disabled: !canPageBackward}">
@@ -19,21 +17,76 @@
             </li>
         </ul>
     </nav>
-    <div ng-show="groups.length > 0">
-        <ol class="list-group">
-            <li class="list-group-item" ng-repeat="group in groups">
-                <h4 class="list-group-item-heading">{{group.displayName}}</h4>
-                <div class="list-group-item-text"><a ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" /> {{group.mail}}</a></div>
-                <div class="list-group-item-text margin-top-md" ng-show="group.description.length > 0">{{group.description}}</div>
-                <div class="margin-top-md" ng-show="group.tags.length > 0">
-                    <ul class="list-inline list-unstyled tag-list">
-                        <li ng-repeat="tag in group.tags">
-                            <span class="label label-primary tag">{{tag}}</span>
+    <div class="margin-top-md" ng-show="groups !== null">
+        <div class="alert alert-warning" ng-show="groups.length === 0">
+            Nothing found :-(
+        </div>
+        <div ng-show="groups.length > 0">
+            <ol class="list-unstyled group-panel-list">
+                <li class="group-panel-item" ng-repeat="group in groups">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            <h3 class="panel-title group-name">{{group.displayName}}</h3>
+                            <div class="group-mail"><a ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{group.mail}}</a></div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="margin-top-md group-description" ng-show="group.description.length > 0">
+                                {{group.description}}
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div>
+                                <strong>Community Annotations</strong>
+                                <a href="" data-toggle="modal" data-target="#group-editor-dialog" ng-click="editGroup(group)"><i class="fa fa-pencil" title="Edit" aria-hidden="true"></i></a>
+                            </div>
+                            <div class="margin-top-md text-muted group-notes" ng-show="group.notes.length > 0">
+                                {{group.notes}}
+                            </div>
+                            <ul class="list-inline list-unstyled tag-list" ng-show="group.tags.length > 0">
+                                <li class="tag-item" ng-repeat="tag in group.tags">
+                                    <span class="label label-primary tag" title="{{tag}}">{{tag}}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+    <div class="modal fade" id="group-editor-dialog" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">{{groupInEdit.group.displayName}}</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="lead">Enter annotations to help the community find this group.</p>
+
+                    <h4>Notes</h4>
+                    <textarea class="form-control" rows="10" placeholder="Enter any notes..." ng-model="groupInEdit.notes" />
+
+                    <h4 class="margin-top-lg">Tags</h4>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Enter a tag..." ng-model="groupInEdit.tagToAdd" ng-keyup="$event.keyCode === 13 && groupInEdit.addTag()">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="button" ng-click="groupInEdit.addTag()">Add</button>
+                        </span>
+                    </div>
+                    <ul class="list-inline list-unstyled tag-list margin-top-md">
+                        <li class="tag-item" ng-repeat="tag in groupInEdit.tags">
+                            <span class="label label-primary tag" title="{{tag}}">{{tag}}</span>
+                            <a href="" title="Remove tag" class="margin-right-md" ng-click="groupInEdit.removeTag(tag)"><i class="fa fa-times text-danger"></i></a>
                         </li>
                     </ul>
                 </div>
-                <div class="margin-top-md text-muted" ng-show="group.notes.length > 0"><em>{{group.notes}}</em></div>
-            </li>
-        </ol>
+                <div class="modal-footer">
+                    <strong ng-show="groupInEdit.isBusy"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i></strong>
+                    <strong ng-show="groupInEdit.message !== null" ng-class="groupInEdit.messageClass">{{groupInEdit.message}}</strong>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveGroupInEdit()" ng-disabled="groupInEdit.isBusy">Save</button>
+                </div>
+            </div>
+        </div>
     </div>
 </form>

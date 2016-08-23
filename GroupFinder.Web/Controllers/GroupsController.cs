@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,9 +31,9 @@ namespace GroupFinder.Web.Controllers
 
         [Route(Constants.ApiRoutePrefix + "/{objectId}")]
         [HttpPatch]
-        public async Task Patch(string objectId, [FromForm(Name = "tag")]IList<string> tags, [FromForm]string notes)
+        public async Task Patch(string objectId, [FromBody]GroupPatch group)
         {
-            await this.processor.UpdateGroupAsync(objectId, tags, notes);
+            await this.processor.UpdateGroupAsync(objectId, group.Tags, group.Notes);
         }
     }
 }

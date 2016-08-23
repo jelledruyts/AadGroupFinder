@@ -1,4 +1,12 @@
-﻿body {
+﻿/*
+    Adding the ng-cloak rules in the CSS file directly since we are not loading Angular.js in the head element.
+    https://docs.angularjs.org/api/ng/directive/ngCloak
+*/
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+    display: none !important;
+}
+
+body {
     padding-top: 70px;
     padding-bottom: 20px;
 }
@@ -10,6 +18,10 @@
     margin-top: 5px;
 }
 
+.margin-right-md {
+    margin-right: 5px;
+}
+
 .margin-bottom-md {
     margin-bottom: 5px;
 }
@@ -18,6 +30,29 @@
     margin-top: 5px;
 }
 
-.tag-list > li {
-    padding-right: 0;
+.margin-top-lg {
+    margin-top: 25px;
+}
+
+.tag-item {
+    padding-right: 0 !important;
+}
+
+.tag {
+    text-transform: lowercase;
+}
+
+.group-panel-item {
+    margin-bottom: 25px;
+}
+
+.group-panel-list {
+}
+
+.group-notes {
+    font-style: italic;
+}
+
+.group-mail {
+    font-size: smaller;
 }

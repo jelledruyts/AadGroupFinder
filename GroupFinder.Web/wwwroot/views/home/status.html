@@ -1,7 +1,10 @@
-﻿<h1>Service Status</h1>
-<dl class="dl-horizontal">
+﻿<h2>Service Status</h2>
+
+<div ng-show="!isBusy && status !== null"><button class="btn btn-primary" ng-click="refreshStatus()"><i class="fa fa-refresh" aria-hidden="true"></i> Refresh</button></div>
+
+<dl class="dl-horizontal margin-top-md" ng-show="status !== null">
     <dt>Number Of Groups:</dt>
-    <dd>{{status.groupCount}}</dd>
+    <dd>{{status.groupCount | number}}</dd>
     <dt>Last Group Sync:</dt>
-    <dd>{{status.lastGroupSyncCompletedTime}}</dd>
+    <dd>{{status.lastGroupSyncCompletedTime | date:'medium'}}</dd>
 </dl>
