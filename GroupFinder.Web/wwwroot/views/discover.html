@@ -27,6 +27,7 @@
             Nothing found :-(
         </div>
         <div ng-show="sharedGroupMemberships.length > 0">
+            <h4>Found {{sharedGroupMemberships.length}} shared group {{sharedGroupMemberships.length === 1 ? 'membership' : 'memberships'}}</h4>
             <ol class="list-unstyled group-panel-list">
                 <li class="group-panel-item" ng-repeat="sharedGroupMembership in sharedGroupMemberships">
                     <div class="panel panel-{{sharedGroupMembership.percentMatch | bootstrap:'percentage-to-context'}}">

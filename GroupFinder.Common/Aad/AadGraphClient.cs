@@ -110,7 +110,7 @@ namespace GroupFinder.Common.Aad
             // Note: the results are paged, follow "odata.nextLink" property.
             //var resultContent = await httpClient.GetStringAsync("https://graph.windows.net/<tenant>/users/<upn>/memberOf?api-version=1.6");
 
-            // We opt for the 3rd option
+            // We choose for the 3rd option.
             var groups = new List<IGroup>();
             this.logger.Log(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
             await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, (group, state) =>
@@ -122,7 +122,7 @@ namespace GroupFinder.Common.Aad
                 return Task.FromResult(0);
             });
             this.logger.Log(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
-            return groups;
+            return groups.OrderBy(g => g.DisplayName).ToArray();
         }
 
         #endregion

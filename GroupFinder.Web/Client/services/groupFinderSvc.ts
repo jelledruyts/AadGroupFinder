@@ -25,8 +25,13 @@
 
         getSharedGroupMemberships(userIds: string[]): ng.IHttpPromise<app.models.SharedGroupMembership[]> {
             var params = {
-                "userIds": userIds.join(","), "minimumType": "multiple", "mailEnabledOnly": true };
+                "userIds": userIds.join(","), "minimumType": "multiple", "mailEnabledOnly": true
+            };
             return this.$http.get(this.baseUrl + "groups/shared?" + app.models.Constants.ApiVersions.GroupFinder, { params: params });
+        }
+
+        getUserGroups(userId: string): ng.IHttpPromise<app.models.Group[]> {
+            return this.$http.get(this.baseUrl + "users/" + userId + "/groups?" + app.models.Constants.ApiVersions.GroupFinder);
         }
 
         searchUsers(search: string, top: number): ng.IHttpPromise<app.models.User[]> {

@@ -1,0 +1,39 @@
+﻿<h2>Browse Groups</h2>
+<blockquote>Want to find out which groups somebody is in?</blockquote>
+<form>
+    <label for="userPrincipalName">Enter a user principal name (e.g. alias@example.org) or search for it by name:</label>
+    <div class="input-group">
+        <span class="input-group-addon">
+            <i class="fa fa-keyboard-o" aria-hidden="true" ng-hide="isAutocompleteBusy || (autocompleteError !== null && autocompleteError.length > 0)"></i>
+            <i class="fa fa-spinner fa-spin" aria-hidden="true" ng-show="isAutocompleteBusy"></i>
+            <i class="fa fa-exclamation-circle text-danger" aria-hidden="true" title="{{autocompleteError}}" ng-show="autocompleteError !== null && autocompleteError.length > 0"></i>
+        </span>
+        <input type="text" id="userPrincipalName" class="form-control" placeholder="Enter a user principal name (e.g. alias@example.org)..." ng-init="initializeAutocomplete('userPrincipalName')" ng-model="userPrincipalName" ng-keyup="$event.keyCode === 13 && getUserGroups()">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="button" ng-click="getUserGroups()"><i class="fa fa-search" aria-hidden="true"></i> Get Groups</button>
+        </span>
+    </div>
+    <div class="margin-top-lg" ng-show="userGroups !== null">
+        <div class="alert alert-warning" ng-show="userGroups.length === 0">
+            Nothing found :-(
+        </div>
+        <div ng-show="userGroups.length > 0">
+            <h4>Found {{userGroups.length}} {{userGroups.length === 1 ? 'group' : 'groups'}}</h4>
+            <ol class="list-unstyled group-panel-list">
+                <li class="group-panel-item" ng-repeat="userGroup in userGroups">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            <h3 class="panel-title group-name">{{userGroup.displayName}}</h3>
+                            <div class="group-mail"><a ng-href="mailto:{{userGroup.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{userGroup.mail}}</a></div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="margin-top-md group-description" ng-show="userGroup.description.length > 0">
+                                {{userGroup.description}}
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</form>

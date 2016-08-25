@@ -17,7 +17,7 @@ namespace GroupFinder.Web.Controllers
 
         [Route(Constants.ApiRoutePrefix + "/search")]
         [HttpGet]
-        public async Task<IList<IGroupSearchResult>> Search([FromQuery(Name = "search")]string search, [FromQuery(Name = "$top")]int top = Constants.DefaultPageSize, [FromQuery(Name = "$skip")]int skip = 0)
+        public async Task<IEnumerable<IGroupSearchResult>> Search([FromQuery(Name = "search")]string search, [FromQuery(Name = "$top")]int top = Constants.DefaultPageSize, [FromQuery(Name = "$skip")]int skip = 0)
         {
             return await this.processor.FindGroupsAsync(search, top, skip);
         }
@@ -38,7 +38,7 @@ namespace GroupFinder.Web.Controllers
 
         [Route(Constants.ApiRoutePrefix + "/shared")]
         [HttpGet]
-        public async Task<IList<SharedGroupMembership>> GetSharedGroupMemberships([FromQuery(Name = "userIds")]string userIds, [FromQuery(Name = "minimumType")]SharedGroupMembershipType minimumType = SharedGroupMembershipType.Multiple, [FromQuery(Name = "mailEnabledOnly")]bool mailEnabledOnly = true)
+        public async Task<IEnumerable<SharedGroupMembership>> GetSharedGroupMemberships([FromQuery(Name = "userIds")]string userIds, [FromQuery(Name = "minimumType")]SharedGroupMembershipType minimumType = SharedGroupMembershipType.Multiple, [FromQuery(Name = "mailEnabledOnly")]bool mailEnabledOnly = true)
         {
             var splitUserIds = userIds == null ? new string[0] : userIds.Split(',');
             return await this.processor.GetSharedGroupMembershipsAsync(splitUserIds, minimumType, mailEnabledOnly);

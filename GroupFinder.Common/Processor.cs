@@ -59,6 +59,11 @@ namespace GroupFinder.Common
             return this.graphClient.FindUsersAsync(searchText, top, false);
         }
 
+        public Task<IList<IGroup>> GetUserGroupsAsync(string userId)
+        {
+            return this.graphClient.GetDirectGroupMembershipsAsync(userId, true);
+        }
+
         #endregion
 
         #region Groups
@@ -90,7 +95,7 @@ namespace GroupFinder.Common
                     groupUserIds.Add(userId);
                 }
             }
-            return sharedGroupMembershipsDictionary.Select(g => new SharedGroupMembership(g.Key, g.Value, userIds.Count)).Where(g => g.Type >= minimumType).OrderByDescending(s => s.PercentMatch).ToList();
+            return sharedGroupMembershipsDictionary.Select(g => new SharedGroupMembership(g.Key, g.Value, userIds.Count)).Where(g => g.Type >= minimumType).OrderByDescending(g => g.PercentMatch).ThenBy(g => g.Group.DisplayName).ToList();
         }
 
         public async Task SynchronizeGroupsAsync()

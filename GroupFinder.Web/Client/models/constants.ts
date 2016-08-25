@@ -9,6 +9,7 @@
             Root: "rootCtrl",
             Search: "searchCtrl",
             Discover: "discoverCtrl",
+            Browse: "browseCtrl",
             About: "aboutCtrl"
         };
         public static ServiceNames = {
