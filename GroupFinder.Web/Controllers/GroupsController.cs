@@ -35,5 +35,13 @@ namespace GroupFinder.Web.Controllers
         {
             await this.processor.UpdateGroupAsync(objectId, group.Tags, group.Notes);
         }
+
+        [Route(Constants.ApiRoutePrefix + "/shared")]
+        [HttpGet]
+        public async Task<IList<SharedGroupMembership>> GetSharedGroupMemberships([FromQuery(Name = "userIds")]string userIds, [FromQuery(Name = "minimumType")]SharedGroupMembershipType minimumType = SharedGroupMembershipType.Multiple, [FromQuery(Name = "mailEnabledOnly")]bool mailEnabledOnly = true)
+        {
+            var splitUserIds = userIds == null ? new string[0] : userIds.Split(',');
+            return await this.processor.GetSharedGroupMembershipsAsync(splitUserIds, minimumType, mailEnabledOnly);
+        }
     }
 }

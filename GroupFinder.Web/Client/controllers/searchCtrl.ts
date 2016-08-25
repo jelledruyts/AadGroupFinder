@@ -1,9 +1,9 @@
 ﻿/// <reference path="rootCtrl.ts" />
-/// <reference path="../services/angeliaSvc.ts" />
+/// <reference path="../services/groupFinderSvc.ts" />
 module app.controllers {
     "use strict";
 
-    interface IHomeScope extends ng.IScope {
+    interface ISearchScope extends ng.IScope {
         searchText: string;
         groups: app.models.Group[];
         pageSize: number;
@@ -20,9 +20,9 @@ module app.controllers {
         saveGroupInEdit(): void;
     }
 
-    class HomeCtrl {
-        static $inject = ["$scope", "$rootScope", "angeliaSvc"];
-        constructor(private $scope: IHomeScope, private $rootScope: IRootScope, private angeliaSvc: app.services.AngeliaSvc) {
+    class SearchCtrl {
+        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
+        constructor(private $scope: ISearchScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
             this.$scope.searchText = null;
             this.$scope.groups = null;
             this.$scope.pageSize = 25;
@@ -35,7 +35,7 @@ module app.controllers {
                 if ($scope.searchText !== null && $scope.searchText.length > 0) {
                     $rootScope.clearMessages();
                     $rootScope.startBusy();
-                    angeliaSvc.searchGroups($scope.searchText, $scope.pageSize, $scope.pageSize * pageIndex)
+                    groupFinderSvc.searchGroups($scope.searchText, $scope.pageSize, $scope.pageSize * pageIndex)
                         .success(results => {
                             $scope.groups = results;
                             $scope.pageIndex = pageIndex;
@@ -77,7 +77,7 @@ module app.controllers {
                 $scope.groupInEdit.message = "Saving...";
                 $scope.groupInEdit.messageClass = "text-info";
                 $scope.groupInEdit.isBusy = true;
-                angeliaSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags)
+                groupFinderSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags)
                     .success(results => {
                         $scope.groupInEdit.applyChanges();
                         $scope.groupInEdit.message = "Changes were saved. Thanks for helping the community out!";
@@ -126,10 +126,12 @@ module app.controllers {
 
         removeTag(tag: string) {
             for (var i = this.tags.length - 1; i >= 0; i--) {
-                if (this.tags[i] === tag) this.tags.splice(i, 1);
+                if (this.tags[i] === tag) {
+                    this.tags.splice(i, 1);
+                }
             }
         }
     }
 
-    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Home, HomeCtrl);
+    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Search, SearchCtrl);
 }

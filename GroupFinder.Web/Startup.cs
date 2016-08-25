@@ -102,7 +102,7 @@ namespace GroupFinder.Web
             var logger = new AggregateLogger(new GroupFinder.Common.Logging.ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
             var persistentStorageForState = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.StateContainer, appConfig.AzureStorage.AdminKey);
             var persistentStorageForBackups = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.BackupContainer, appConfig.AzureStorage.AdminKey);
-            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey);
+            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey, true);
 
             var cache = new PersistentStorageTokenCache(logger, persistentStorageForState, appConfig.AzureAD.TokenCacheFileName);
             await cache.LoadAsync();

@@ -7,11 +7,15 @@
         };
         public static ControllerNames = {
             Root: "rootCtrl",
-            Home: "homeCtrl",
+            Search: "searchCtrl",
+            Discover: "discoverCtrl",
             About: "aboutCtrl"
         };
         public static ServiceNames = {
-            Angelia: "angeliaSvc"
+            GroupFinder: "groupFinderSvc"
+        };
+        public static ApiVersions = {
+            GroupFinder: "api-version=1.0"
         };
     }
 }

@@ -2,17 +2,45 @@
 module app {
     "use strict";
     angular.module(app.models.Constants.App.AngularAppName, ["ngRoute", "AdalAngular"])
+        // Filters
+        .filter("percentage", ["$filter", function ($filter: ng.IFilterService) {
+            // This filter makes the assumption that the input will be in decimal form (i.e. 17% is 0.17).
+            return function (input: number, decimals: number) {
+                return $filter("number")(input * 100, decimals) + "%";
+            };
+        }])
+        .filter("bootstrap", ["$filter", function ($filter: ng.IFilterService) {
+            return function (input: any, format: string) {
+                if (format === "percentage-to-context") {
+                    var percentage = <number>input;
+                    if (percentage === 1) {
+                        return "success";
+                    } else if (percentage === 0) {
+                        return "danger";
+                    } else {
+                        return "warning";
+                    }
+                } else {
+                    return input;
+                }
+            };
+        }])
         // Configuration
         .config(["$routeProvider", "$httpProvider", "adalAuthenticationServiceProvider", function ($routeProvider: ng.route.IRouteProvider, $httpProvider: ng.IHttpProvider, adalProvider: any) {
             // Configure the routes.
             $routeProvider
                 .when("/", {
-                    templateUrl: "views/home/groups.html",
-                    controller: app.models.Constants.ControllerNames.Home,
+                    templateUrl: "views/search.html",
+                    controller: app.models.Constants.ControllerNames.Search,
+                    requireADLogin: true
+                })
+                .when("/discover", {
+                    templateUrl: "views/discover.html",
+                    controller: app.models.Constants.ControllerNames.Discover,
                     requireADLogin: true
                 })
                 .when("/about", {
-                    templateUrl: "views/home/about.html",
+                    templateUrl: "views/about.html",
                     controller: app.models.Constants.ControllerNames.About,
                     requireADLogin: true
                 })

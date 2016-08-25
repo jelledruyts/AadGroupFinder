@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -43,10 +44,10 @@ namespace GroupFinder.Common.Aad
 
         public Task<IList<IUser>> FindUsersAsync(string searchText)
         {
-            return FindUsersAsync(searchText, false);
+            return FindUsersAsync(searchText, null, false);
         }
 
-        public async Task<IList<IUser>> FindUsersAsync(string searchText, bool includeGuests)
+        public async Task<IList<IUser>> FindUsersAsync(string searchText, int? top, bool includeGuests)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
@@ -59,15 +60,24 @@ namespace GroupFinder.Common.Aad
             // Search for the user in all potentially interesting fields in the directory.
             // Note that only the 'startswith' filter is available so we cannot use a 'contains' type of matching.
             var url = $"{this.aadGraphApiTenantEndpoint}/users/?$filter=startswith(displayName,'{escapedSearchText}') or startswith(givenName,'{escapedSearchText}') or startswith(mail,'{escapedSearchText}') or startswith(mailNickname,'{escapedSearchText}') or startswith(surname,'{escapedSearchText}') or startswith(userPrincipalName,'{escapedSearchText}')";
-            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, null, (user, state) =>
+            Func<IList<AadUser>, PagingState, Task<bool>> pageHandler = (pageUsers, state) =>
             {
-                if (includeGuests || !string.Equals(user.UserType, AadUser.UserTypeGuest, StringComparison.OrdinalIgnoreCase))
+                foreach (var pageUser in pageUsers)
                 {
-                    users.Add(user);
+                    if (includeGuests || !string.Equals(pageUser.UserType, AadUser.UserTypeGuest, StringComparison.OrdinalIgnoreCase))
+                    {
+                        users.Add(pageUser);
+                    }
                 }
-                return Task.FromResult(0);
-            });
+                var shouldContinue = !top.HasValue || users.Count < top.Value;
+                return Task.FromResult(shouldContinue);
+            };
+            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null);
             this.logger.Log(EventLevel.Verbose, $"Retrieved {users.Count} users for search term \"{escapedSearchText}\"");
+            if (top.HasValue)
+            {
+                users = users.Take(top.Value).ToList();
+            }
             return users;
         }
 
@@ -75,7 +85,7 @@ namespace GroupFinder.Common.Aad
 
         #region Group Membership
 
-        public async Task<IList<IGroup>> GetDirectGroupMembershipsAsync(string user)
+        public async Task<IList<IGroup>> GetDirectGroupMembershipsAsync(string user, bool mailEnabledOnly)
         {
             if (string.IsNullOrWhiteSpace(user))
             {
@@ -105,7 +115,10 @@ namespace GroupFinder.Common.Aad
             this.logger.Log(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
             await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, (group, state) =>
             {
-                groups.Add(group);
+                if (!mailEnabledOnly || group.MailEnabled)
+                {
+                    groups.Add(group);
+                }
                 return Task.FromResult(0);
             });
             this.logger.Log(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
@@ -116,12 +129,12 @@ namespace GroupFinder.Common.Aad
 
         #region Groups
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task> pageHandler, Func<AadGroup, PagingState, Task> itemHandler)
+        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler)
         {
             return VisitGroupsAsync(pageHandler, itemHandler, null);
         }
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, string continuationUrl)
+        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, string continuationUrl)
         {
             this.logger.Log(EventLevel.Informational, $"Retrieving groups");
             var url = string.IsNullOrWhiteSpace(continuationUrl) ? $"{this.aadGraphApiTenantEndpoint}/groups?deltaLink=" : continuationUrl;
@@ -132,15 +145,15 @@ namespace GroupFinder.Common.Aad
 
         #region Helper Methods
 
-        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
+        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
         {
             var state = new PagingState();
 
             // Visit the first page.
-            await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
+            var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
 
             // Keep visiting pages if there are any.
-            while (true)
+            while (shouldContinue)
             {
                 var nextPageUrl = default(string);
                 if (!string.IsNullOrWhiteSpace(state.ODataNextLink))
@@ -155,11 +168,11 @@ namespace GroupFinder.Common.Aad
                 {
                     break;
                 }
-                await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler);
+                shouldContinue = await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler);
             }
         }
 
-        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
+        private async Task<bool> VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
         {
             // Add the API version parameter if needed.
             if (!url.Contains(Constants.AadGraphApiVersionParameterName))
@@ -264,10 +277,12 @@ namespace GroupFinder.Common.Aad
                 }
             }
 
+            var shouldContinue = true;
             if (pageHandler != null)
             {
-                await pageHandler(entities, state);
+                shouldContinue = await pageHandler(entities, state);
             }
+            return shouldContinue;
         }
 
         private async Task<HttpClient> GetClientAsync()

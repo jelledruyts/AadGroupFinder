@@ -1,23 +1,28 @@
-﻿<h2>Find Groups</h2>
+﻿<h2>Search Groups</h2>
 <blockquote>Having trouble finding a good discussion list on a certain topic? Perform a <em>real</em> search for the right email group here!</blockquote>
 <form>
+    <!-- Search Form -->
     <div class="input-group margin-bottom-md">
         <input type="search" class="form-control" placeholder="Enter your search text..." ng-model="searchText" ng-keyup="$event.keyCode === 13 && findGroups()">
         <span class="input-group-btn">
             <button class="btn btn-primary" type="button" ng-click="findGroups()"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
         </span>
     </div>
+
+    <!-- Paging -->
     <nav aria-label="Page navigation" ng-show="canPageBackward || canPageForward">
         <ul class="pagination">
             <li ng-class="{disabled: !canPageBackward}">
-                <a aria-label="Previous" ng-click="pageBackward()" title="Previous"><span aria-hidden="true">&laquo;</span></a>
+                <a href="" aria-label="Previous" ng-click="pageBackward()" title="Previous"><span aria-hidden="true">&laquo;</span></a>
             </li>
             <li class="disabled"><a class="text-small">Page {{pageIndex + 1}}</a></li>
             <li ng-class="{disabled: !canPageForward}">
-                <a aria-label="Next" ng-click="pageForward()" title="Next"><span aria-hidden="true">&raquo;</span></a>
+                <a href="" aria-label="Next" ng-click="pageForward()" title="Next"><span aria-hidden="true">&raquo;</span></a>
             </li>
         </ul>
     </nav>
+
+    <!-- Search Results -->
     <div class="margin-top-md" ng-show="groups !== null">
         <div class="alert alert-warning" ng-show="groups.length === 0">
             Nothing found :-(
@@ -54,6 +59,8 @@
             </ol>
         </div>
     </div>
+
+    <!-- Group Editor Dialog -->
     <div class="modal fade" id="group-editor-dialog" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">

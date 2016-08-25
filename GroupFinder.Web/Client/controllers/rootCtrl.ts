@@ -47,7 +47,7 @@
             }
             this.$rootScope.setError = function (errorMessage?: string) {
                 if (typeof errorMessage === "undefined" || errorMessage === null) {
-                    errorMessage = "An error occurred :-(";
+                    errorMessage = "An error occurred :-( Please try again later.";
                 }
                 $rootScope.errorMessage = errorMessage;
             }

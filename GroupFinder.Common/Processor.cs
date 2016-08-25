@@ -54,27 +54,27 @@ namespace GroupFinder.Common
 
         #region Users
 
-        public Task<IList<IUser>> FindUsersAsync(string searchText)
+        public Task<IList<IUser>> FindUsersAsync(string searchText, int? top)
         {
-            return this.graphClient.FindUsersAsync(searchText, false);
+            return this.graphClient.FindUsersAsync(searchText, top, false);
         }
 
         #endregion
 
         #region Groups
 
-        public async Task<IList<SharedGroupMembership>> FindSharedGroupMembershipsAsync(IList<string> userIds)
+        public async Task<IList<SharedGroupMembership>> GetSharedGroupMembershipsAsync(IList<string> userIds, SharedGroupMembershipType minimumType, bool mailEnabledOnly)
         {
             if (userIds == null || !userIds.Any())
             {
                 throw new ArgumentException($"The \"{nameof(userIds)}\" parameter is required and needs to have at least one item.", nameof(userIds));
             }
             this.logger.Log(EventLevel.Informational, $"Retrieving all group memberships for {userIds.Count} user(s)");
-            var userTasks = userIds.Select(u => this.graphClient.GetDirectGroupMembershipsAsync(u));
+            var userTasks = userIds.Select(u => this.graphClient.GetDirectGroupMembershipsAsync(u, mailEnabledOnly));
             var userGroupLists = await Task.WhenAll(userTasks);
 
             this.logger.Log(EventLevel.Informational, "Processing shared group memberships");
-            var sharedGroupMemberships = new Dictionary<IGroup, IList<string>>();
+            var sharedGroupMembershipsDictionary = new Dictionary<IGroup, IList<string>>();
             for (var i = 0; i < userIds.Count; i++)
             {
                 var userId = userIds[i];
@@ -82,15 +82,15 @@ namespace GroupFinder.Common
                 foreach (var userGroup in userGroups)
                 {
                     var groupUserIds = default(IList<string>);
-                    if (!sharedGroupMemberships.TryGetValue(userGroup, out groupUserIds))
+                    if (!sharedGroupMembershipsDictionary.TryGetValue(userGroup, out groupUserIds))
                     {
                         groupUserIds = new List<string>();
-                        sharedGroupMemberships[userGroup] = groupUserIds;
+                        sharedGroupMembershipsDictionary[userGroup] = groupUserIds;
                     }
                     groupUserIds.Add(userId);
                 }
             }
-            return sharedGroupMemberships.Select(g => new SharedGroupMembership(g.Key, g.Value, userIds.Count)).OrderByDescending(s => s.PercentMatch).ToList();
+            return sharedGroupMembershipsDictionary.Select(g => new SharedGroupMembership(g.Key, g.Value, userIds.Count)).Where(g => g.Type >= minimumType).OrderByDescending(s => s.PercentMatch).ToList();
         }
 
         public async Task SynchronizeGroupsAsync()
@@ -114,7 +114,7 @@ namespace GroupFinder.Common
                     this.logger.Log(EventLevel.Informational, $"Continuing incomplete group synchronization started at {processorState.LastGroupSyncStartedTime}");
                 }
             }
-            Func<IList<AadGroup>, PagingState, Task> pageHandler = async (groups, state) =>
+            Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler = async (groups, state) =>
             {
                 // Handle the data in the current page.
                 var groupsToProcess = groups.Where(g => g.MailEnabled);
@@ -142,6 +142,7 @@ namespace GroupFinder.Common
                     processorState.LastGroupSyncCompletedTime = DateTimeOffset.UtcNow;
                 }
                 await this.persistentStorageForState.SaveAsync(ProcessorStateFileName, processorState);
+                return true;
             };
             await this.graphClient.VisitGroupsAsync(pageHandler, null, continuationUrl);
         }

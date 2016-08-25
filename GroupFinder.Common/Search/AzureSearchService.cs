@@ -32,13 +32,14 @@ namespace GroupFinder.Common.Search
         private readonly ILogger logger;
         private readonly string indexName;
         private readonly SearchServiceClient serviceClient;
+        private readonly bool forceIndexInitialization;
         private SearchIndexClient indexClient;
 
         #endregion
 
         #region Constructors
 
-        public AzureSearchService(ILogger logger, string searchServiceName, string indexName, string adminKey)
+        public AzureSearchService(ILogger logger, string searchServiceName, string indexName, string adminKey, bool forceIndexInitialization)
         {
             if (string.IsNullOrWhiteSpace(searchServiceName))
             {
@@ -55,6 +56,7 @@ namespace GroupFinder.Common.Search
 
             this.logger = logger ?? NullLogger.Instance;
             this.indexName = indexName;
+            this.forceIndexInitialization = forceIndexInitialization;
             this.serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(adminKey));
         }
 
@@ -121,7 +123,7 @@ namespace GroupFinder.Common.Search
             }
             await EnsureInitialized();
             this.logger.Log(EventLevel.Informational, $"Upserting {groups.Count()} group(s)");
-            var batch = IndexBatch.Upload(groups.Select(g =>
+            var batch = IndexBatch.MergeOrUpload(groups.Select(g =>
             {
                 this.logger.Log(EventLevel.Verbose, $"Upserting \"{g.ObjectId}\" ({g.DisplayName})");
                 var doc = new Document();
@@ -216,7 +218,10 @@ namespace GroupFinder.Common.Search
         {
             if (this.indexClient == null)
             {
-                await InitializeAsync();
+                if (this.forceIndexInitialization)
+                {
+                    await InitializeAsync();
+                }
                 this.indexClient = this.serviceClient.Indexes.GetClient(this.indexName);
             }
         }

@@ -47,7 +47,7 @@ namespace GroupFinder.ConsoleProcessor
             var logger = new AggregateLogger(new ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
             var persistentStorageForState = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.StateContainer, appConfig.AzureStorage.AdminKey);
             var persistentStorageForBackups = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.BackupContainer, appConfig.AzureStorage.AdminKey);
-            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey);
+            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey, false);
 
             var cache = new PersistentStorageTokenCache(logger, persistentStorageForState, appConfig.AzureAD.TokenCacheFileName);
             await cache.LoadAsync();
@@ -87,7 +87,7 @@ namespace GroupFinder.ConsoleProcessor
                     }
                     else if (command == "5")
                     {
-                        await FindSharedGroupMembershipsAsync(processor);
+                        await GetSharedGroupMembershipsAsync(processor);
                     }
                     else if (command == "6")
                     {
@@ -149,7 +149,7 @@ namespace GroupFinder.ConsoleProcessor
             var searchText = Console.ReadLine();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var users = await processor.FindUsersAsync(searchText);
+            var users = await processor.FindUsersAsync(searchText, null);
             stopwatch.Stop();
 
             var index = 0;
@@ -177,18 +177,18 @@ namespace GroupFinder.ConsoleProcessor
             Console.WriteLine($"Found {groups.Count} group(s) in {stopwatch.ElapsedMilliseconds} ms");
         }
 
-        private static async Task FindSharedGroupMembershipsAsync(Processor processor)
+        private static async Task GetSharedGroupMembershipsAsync(Processor processor)
         {
             Console.WriteLine("Enter user UPN's separated with semicolons (e.g. 'john@example.org; jane@example.org'):");
             var upns = Console.ReadLine().Split(';').Select(u => u.Trim()).ToArray();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var sharedGroups = await processor.FindSharedGroupMembershipsAsync(upns);
+            var sharedGroups = await processor.GetSharedGroupMembershipsAsync(upns, SharedGroupMembershipType.Single, true);
             stopwatch.Stop();
 
-            foreach (var sharedGroup in sharedGroups.Where(s => s.UserIds.Count > 1))
+            foreach (var sharedGroup in sharedGroups)
             {
-                Console.WriteLine($"  {sharedGroup.PercentMatch.ToString("P0")}: \"{sharedGroup.Group.DisplayName}\" ({string.Join(";", sharedGroup.UserIds)})");
+                Console.WriteLine($"  {sharedGroup.PercentMatch.ToString("P0")}: \"{sharedGroup.Group.DisplayName}\" ({sharedGroup.Type.ToString()}: {string.Join(";", sharedGroup.UserIds)})");
             }
             Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) in {stopwatch.ElapsedMilliseconds} ms");
         }

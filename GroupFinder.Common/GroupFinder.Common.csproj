@@ -138,6 +138,7 @@
     <Compile Include="Security\PersistentStorageTokenCache.cs" />
     <Compile Include="ServiceStatus.cs" />
     <Compile Include="SharedGroupMembership.cs" />
+    <Compile Include="SharedGroupMembershipType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

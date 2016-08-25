@@ -1,5 +1,5 @@
 ﻿/// <reference path="rootCtrl.ts" />
-/// <reference path="../services/angeliaSvc.ts" />
+/// <reference path="../services/groupFinderSvc.ts" />
 module app.controllers {
     "use strict";
 
@@ -9,13 +9,13 @@ module app.controllers {
     }
 
     class AboutCtrl {
-        static $inject = ["$scope", "$rootScope", "angeliaSvc"];
-        constructor(private $scope: IAboutScope, private $rootScope: IRootScope, private angeliaSvc: app.services.AngeliaSvc) {
+        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
+        constructor(private $scope: IAboutScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
             this.$scope.status = null;
 
             var refreshStatusInternal = function () {
                 $rootScope.clearMessages();
-                angeliaSvc.getStatus()
+                groupFinderSvc.getStatus()
                     .success(results => {
                         $scope.status = results;
                     })
