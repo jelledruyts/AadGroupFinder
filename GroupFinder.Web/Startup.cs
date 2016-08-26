@@ -34,6 +34,7 @@ namespace GroupFinder.Web
             if (env.IsDevelopment())
             {
                 builder.AddUserSecrets("GroupFinder");
+                builder.AddApplicationInsightsSettings(developerMode: true);
             }
             this.AppConfiguration = new AppConfiguration();
             this.Configuration = builder.Build();
@@ -68,6 +69,9 @@ namespace GroupFinder.Web
                 options.LowercaseUrls = true;
             });
 
+            // Add Application Insights.
+            services.AddApplicationInsightsTelemetry(this.Configuration);
+
             // Create and inject the Processor singleton.
             var processor = GetProcessorAsync(this.AppConfiguration).Result;
             services.AddSingleton(processor);
@@ -80,12 +84,20 @@ namespace GroupFinder.Web
             loggerFactory.AddConsole(this.Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
+            // Add Application Insights monitoring to the request pipeline as a very first middleware.
+            app.UseApplicationInsightsRequestTelemetry();
+
+            // Add Application Insights exceptions handling to the request pipeline.
+            // NOTE: Exception middleware should be added after error page and any other error handling middleware.
+            app.UseApplicationInsightsExceptionTelemetry();
+
             // This must be placed before UseStaticFiles because it only rewrites the URL, which is then served by UseStaticFiles.
             app.UseDefaultFiles();
 
             // Add static files to the request pipeline.
             app.UseStaticFiles();
 
+            // Require authentication using OAuth 2.0 bearer tokens.
             app.UseJwtBearerAuthentication(new JwtBearerOptions
             {
                 AutomaticAuthenticate = true,
@@ -94,6 +106,7 @@ namespace GroupFinder.Web
                 SaveToken = true // This makes the JWT token available through "this.HttpContext.Authentication.GetTokenAsync(...)".
             });
 
+            // Use MVC to enable Web API.
             app.UseMvc();
         }
 

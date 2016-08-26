@@ -14,6 +14,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <SchemaVersion>2.0</SchemaVersion>
+    <ApplicationInsightsResourceId>/subscriptions/1963f1ce-358f-4a5c-b5a8-c4931cdf49cf/resourcegroups/GroupFinder/providers/microsoft.insights/components/angelia</ApplicationInsightsResourceId>
   </PropertyGroup>
   <ItemGroup>
     <DnxInvisibleContent Include=".bowerrc" />
