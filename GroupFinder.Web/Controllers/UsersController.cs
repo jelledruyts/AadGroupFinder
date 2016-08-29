@@ -27,5 +27,12 @@ namespace GroupFinder.Web.Controllers
         {
             return await this.processor.GetUserGroupsAsync(userId);
         }
+
+        [Route(Constants.ApiRoutePrefix + "/{userId}/recommendedGroups")]
+        [HttpGet]
+        public async Task<IEnumerable<RecommendedGroup>> GetRecommendedGroups(string userId)
+        {
+            return await this.processor.GetRecommendedGroupsAsync(userId);
+        }
     }
 }

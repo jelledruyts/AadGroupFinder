@@ -10,7 +10,8 @@
             Search: "searchCtrl",
             Discover: "discoverCtrl",
             Browse: "browseCtrl",
-            About: "aboutCtrl"
+            About: "aboutCtrl",
+            Recommend: "recommendCtrl"
         };
         public static ServiceNames = {
             GroupFinder: "groupFinderSvc"

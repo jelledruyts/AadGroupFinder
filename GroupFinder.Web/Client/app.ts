@@ -34,6 +34,11 @@ module app {
                     controller: app.models.Constants.ControllerNames.Search,
                     requireADLogin: true
                 })
+                .when("/recommend", {
+                    templateUrl: "views/recommend.html",
+                    controller: app.models.Constants.ControllerNames.Recommend,
+                    requireADLogin: true
+                })
                 .when("/discover", {
                     templateUrl: "views/discover.html",
                     controller: app.models.Constants.ControllerNames.Discover,

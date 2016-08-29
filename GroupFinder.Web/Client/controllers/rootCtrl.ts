@@ -8,6 +8,7 @@
         errorMessage: string;
         busyMessage: string;
         isBusy: boolean;
+        userInfo: adal.IUserInfo;
 
         isActive(viewLocation: string): boolean;
         logout(): void;

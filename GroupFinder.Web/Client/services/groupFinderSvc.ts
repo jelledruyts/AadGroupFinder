@@ -38,6 +38,10 @@
             var params = { "search": search, "$top": top };
             return this.$http.get(this.baseUrl + "users/search?" + app.models.Constants.ApiVersions.GroupFinder, { params: params });
         }
+
+        getRecommendedGroups(userId: string): ng.IHttpPromise<app.models.RecommendedGroup[]> {
+            return this.$http.get(this.baseUrl + "users/" + userId + "/recommendedGroups?" + app.models.Constants.ApiVersions.GroupFinder);
+        }
     }
 
     angular.module(app.models.Constants.App.AngularAppName).service(app.models.Constants.ServiceNames.GroupFinder, GroupFinderSvc);
