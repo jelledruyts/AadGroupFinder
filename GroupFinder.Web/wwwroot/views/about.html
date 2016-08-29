@@ -44,5 +44,5 @@
 <div class="ng-cloak" ng-show="status !== null">
     <h2>Service Status</h2>
     <p ng-show="status.lastGroupSyncCompletedTime !== null">The last complete synchronization finished <strong>{{status.lastGroupSyncCompletedTime | date:'medium'}}</strong>.</p>
-    <p ng-show="status.groupCount !== null">We currently have <strong>{{status.groupCount | number}}</strong> groups in our search index.</p>
+    <p ng-show="status.groupCount !== null">There are currently <strong>{{status.groupCount | number}}</strong> groups in the search index.</p>
 </div>

@@ -61,41 +61,58 @@ namespace GroupFinder.ConsoleProcessor
                 // Interactive mode: prompt for action.
                 while (true)
                 {
-                    Console.WriteLine("What do you want to do?");
-                    Console.WriteLine("  1 - Display Status");
-                    Console.WriteLine("  2 - Synchronize Groups");
-                    Console.WriteLine("  3 - Find Users");
-                    Console.WriteLine("  4 - Find Groups");
-                    Console.WriteLine("  5 - Find Shared Group Memberships");
-                    Console.WriteLine("  6 - Prime ADAL Token Cache");
-                    var command = Console.ReadLine().ToUpperInvariant();
-                    if (command == "1")
+                    try
                     {
-                        await DisplayStatusAsync(processor);
+                        Console.WriteLine("What do you want to do?");
+                        Console.WriteLine("  1 - Display Status");
+                        Console.WriteLine("  2 - Find Users");
+                        Console.WriteLine("  3 - Get Groups Of A User");
+                        Console.WriteLine("  4 - Find Groups");
+                        Console.WriteLine("  5 - Find Shared Group Memberships");
+                        Console.WriteLine("  6 - Get Recommended Groups");
+                        Console.WriteLine("  A - Synchronize Groups");
+                        Console.WriteLine("  B - Prime ADAL Token Cache");
+                        var command = Console.ReadLine().ToUpperInvariant();
+                        if (command == "1")
+                        {
+                            await DisplayStatusAsync(processor);
+                        }
+                        else if (command == "2")
+                        {
+                            await FindUsersAsync(processor);
+                        }
+                        else if (command == "3")
+                        {
+                            await GetUserGroupsAsync(processor);
+                        }
+                        else if (command == "4")
+                        {
+                            await FindGroupsAsync(processor);
+                        }
+                        else if (command == "5")
+                        {
+                            await GetSharedGroupMembershipsAsync(processor);
+                        }
+                        else if (command == "6")
+                        {
+                            await GetRecommendedGroupsAsync(processor);
+                        }
+                        else if (command == "A")
+                        {
+                            await SynchronizeGroupsOnceAsync(processor);
+                        }
+                        else if (command == "B")
+                        {
+                            await PrimeAdalCacheAsync(logger, persistentStorageForState, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, appConfig.AzureAD.RedirectUri);
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    else if (command == "2")
+                    catch (Exception exc)
                     {
-                        await SynchronizeGroupsOnceAsync(processor);
-                    }
-                    else if (command == "3")
-                    {
-                        await FindUsersAsync(processor);
-                    }
-                    else if (command == "4")
-                    {
-                        await FindGroupsAsync(processor);
-                    }
-                    else if (command == "5")
-                    {
-                        await GetSharedGroupMembershipsAsync(processor);
-                    }
-                    else if (command == "6")
-                    {
-                        await PrimeAdalCacheAsync(logger, persistentStorageForState, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, appConfig.AzureAD.RedirectUri);
-                    }
-                    else
-                    {
-                        break;
+                        Console.WriteLine($"Error: {exc.ToString()}");
                     }
                 }
             }
@@ -128,21 +145,6 @@ namespace GroupFinder.ConsoleProcessor
             Console.WriteLine($"Search Service Status: {status.GroupCount} groups indexed ({status.GroupSearchIndexSizeBytes / (1024 * 1024)} MB)");
         }
 
-        private static async Task SynchronizeGroupsOnceAsync(Processor processor)
-        {
-            await processor.SynchronizeGroupsAsync();
-        }
-
-        private static async Task SynchronizeGroupsContinuouslyAsync(ILogger logger, Processor processor, TimeSpan waitTime)
-        {
-            while (true)
-            {
-                await SynchronizeGroupsOnceAsync(processor);
-                logger.Log(EventLevel.Informational, $"Waiting {waitTime} to start next group synchronization");
-                await Task.Delay(waitTime);
-            }
-        }
-
         private static async Task FindUsersAsync(Processor processor)
         {
             Console.WriteLine("Enter search text:");
@@ -158,6 +160,23 @@ namespace GroupFinder.ConsoleProcessor
                 Console.WriteLine($"  {++index}: {user.DisplayName} ({user.UserPrincipalName})");
             }
             Console.WriteLine($"Found {users.Count} user(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task GetUserGroupsAsync(Processor processor)
+        {
+            Console.WriteLine("Enter user UPN:");
+            var userId = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var groups = await processor.GetUserGroupsAsync(userId);
+            stopwatch.Stop();
+
+            var index = 0;
+            foreach (var group in groups)
+            {
+                Console.WriteLine($"  {++index}: {group.DisplayName} ({group.Mail})");
+            }
+            Console.WriteLine($"Found {groups.Count} group(s) in {stopwatch.ElapsedMilliseconds} ms");
         }
 
         private static async Task FindGroupsAsync(Processor processor)
@@ -183,7 +202,7 @@ namespace GroupFinder.ConsoleProcessor
             var upns = Console.ReadLine().Split(';').Select(u => u.Trim()).ToArray();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-            var sharedGroups = await processor.GetSharedGroupMembershipsAsync(upns, SharedGroupMembershipType.Single, true);
+            var sharedGroups = await processor.GetSharedGroupMembershipsAsync(upns, SharedGroupMembershipType.Multiple, true);
             stopwatch.Stop();
 
             foreach (var sharedGroup in sharedGroups)
@@ -191,6 +210,37 @@ namespace GroupFinder.ConsoleProcessor
                 Console.WriteLine($"  {sharedGroup.PercentMatch.ToString("P0")}: \"{sharedGroup.Group.DisplayName}\" ({sharedGroup.Type.ToString()}: {string.Join(";", sharedGroup.UserIds)})");
             }
             Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task GetRecommendedGroupsAsync(Processor processor)
+        {
+            Console.WriteLine("Enter user UPN:");
+            var userId = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var recommendedGroups = await processor.GetRecommendedGroupsAsync(userId);
+            stopwatch.Stop();
+
+            foreach (var recommendedGroup in recommendedGroups)
+            {
+                Console.WriteLine($"  {recommendedGroup.Score.ToString("P0")}: \"{recommendedGroup.Group.DisplayName}\" ({recommendedGroup.Reasons.ToString()})");
+            }
+            Console.WriteLine($"Found {recommendedGroups.Count} recommended group(s) in {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private static async Task SynchronizeGroupsOnceAsync(Processor processor)
+        {
+            await processor.SynchronizeGroupsAsync();
+        }
+
+        private static async Task SynchronizeGroupsContinuouslyAsync(ILogger logger, Processor processor, TimeSpan waitTime)
+        {
+            while (true)
+            {
+                await SynchronizeGroupsOnceAsync(processor);
+                logger.Log(EventLevel.Informational, $"Waiting {waitTime} to start next group synchronization");
+                await Task.Delay(waitTime);
+            }
         }
 
         private static async Task PrimeAdalCacheAsync(ILogger logger, IPersistentStorage persistentStorage, string tenant, string clientId, Uri redirectUri)

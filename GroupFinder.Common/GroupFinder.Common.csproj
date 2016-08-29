@@ -115,6 +115,8 @@
     <Compile Include="PersistentStorage\AzureBlobStorage.cs" />
     <Compile Include="PersistentStorage\FileStorage.cs" />
     <Compile Include="PersistentStorage\PersistentStorageBase.cs" />
+    <Compile Include="RecommendedGroup.cs" />
+    <Compile Include="RecommendedGroupReasons.cs" />
     <Compile Include="Search\AzureSearchService.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Aad\ErrorInfo.cs" />

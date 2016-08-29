@@ -98,6 +98,31 @@ namespace GroupFinder.Common
             return sharedGroupMembershipsDictionary.Select(g => new SharedGroupMembership(g.Key, g.Value, userIds.Count)).Where(g => g.Type >= minimumType).OrderByDescending(g => g.PercentMatch).ThenBy(g => g.Group.DisplayName).ToList();
         }
 
+        public async Task<IList<RecommendedGroup>> GetRecommendedGroupsAsync(string userId)
+        {
+            var recommendedGroups = new List<RecommendedGroup>();
+
+            // Get recommended groups based on the user's peers (i.e. who share the same manager).
+            this.logger.Log(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
+            var manager = await this.graphClient.GetUserManagerAsync(userId);
+            if (manager != null)
+            {
+                // Get the user's peers.
+                this.logger.Log(EventLevel.Informational, $"Getting direct reports for manager \"{manager.UserPrincipalName}\"");
+                var peers = await this.graphClient.GetDirectReportsAsync(manager.UserPrincipalName);
+                var user = peers.SingleOrDefault(p => p.UserPrincipalName == userId || p.ObjectId == userId);
+                var peerUserIds = peers.Select(p => p.UserPrincipalName).ToArray();
+
+                // Get shared group memberships and exclude groups that the user is already a member of.
+                var sharedGroupMemberships = await GetSharedGroupMembershipsAsync(peerUserIds, SharedGroupMembershipType.Multiple, true);
+                recommendedGroups = sharedGroupMemberships
+                    .Where(g => !g.UserIds.Contains(user.UserPrincipalName))
+                    .Select(g => new RecommendedGroup(g.Group, g.PercentMatch, RecommendedGroupReasons.SharedGroupMembershipOfPeers))
+                    .ToList();
+            }
+            return recommendedGroups;
+        }
+
         public async Task SynchronizeGroupsAsync()
         {
             var processorState = await this.persistentStorageForState.LoadAsync<ProcessorState>(ProcessorStateFileName);

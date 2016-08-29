@@ -18,6 +18,7 @@ namespace GroupFinder.Common.Aad
         private readonly ILogger logger;
         private readonly string aadGraphApiTenantEndpoint;
         private readonly ITokenProvider tokenProvider;
+        private readonly JsonSerializer jsonSerializer;
 
         #endregion
 
@@ -36,6 +37,9 @@ namespace GroupFinder.Common.Aad
             this.logger = logger ?? NullLogger.Instance;
             this.aadGraphApiTenantEndpoint = Constants.AadGraphApiEndpoint + tenant;
             this.tokenProvider = tokenProvider;
+            // The JSON serializer is thread-safe and can be reused.
+            // http://stackoverflow.com/questions/36186276/is-the-json-net-jsonserializer-threadsafe
+            this.jsonSerializer = new JsonSerializer();
         }
 
         #endregion
@@ -79,6 +83,53 @@ namespace GroupFinder.Common.Aad
                 users = users.Take(top.Value).ToList();
             }
             return users;
+        }
+
+        public async Task<IUser> GetUserManagerAsync(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException($"The \"{nameof(userId)}\" parameter is required.", nameof(userId));
+            }
+
+            this.logger.Log(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
+            var manager = default(IUser);
+            Func<JsonReader, Task> jsonHandler = (jsonReader) =>
+            {
+                var entity = jsonSerializer.Deserialize<AadUser>(jsonReader);
+                if (string.Equals(entity.ObjectType, AadUser.ObjectTypeName, StringComparison.Ordinal))
+                {
+                    this.logger.Log(EventLevel.Verbose, $"Read object: \"{entity.ObjectId}\" ({entity.ObjectType})");
+                    manager = entity;
+                }
+                else
+                {
+                    this.logger.Log(EventLevel.Verbose, $"Skipping object \"{entity.ObjectId}\" due to mismatching object type \"{entity.ObjectType}\"");
+                }
+                return Task.FromResult(0);
+            };
+            var url = $"{this.aadGraphApiTenantEndpoint}/users/{userId}/manager";
+            await ProcessUrlAsync(url, jsonHandler);
+
+            return manager;
+        }
+
+        public async Task<IList<IUser>> GetDirectReportsAsync(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new ArgumentException($"The \"{nameof(userId)}\" parameter is required.", nameof(userId));
+            }
+
+            var directReports = new List<IUser>();
+            this.logger.Log(EventLevel.Informational, $"Getting direct reports for user \"{userId}\"");
+            await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, (directReport, state) =>
+            {
+                directReports.Add(directReport);
+                return Task.FromResult(0);
+            });
+            this.logger.Log(EventLevel.Verbose, $"Retrieved {directReports.Count} direct reports for user \"{userId}\"");
+            return directReports;
         }
 
         #endregion
@@ -145,7 +196,7 @@ namespace GroupFinder.Common.Aad
 
         #region Helper Methods
 
-        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
+        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler)
         {
             var state = new PagingState();
 
@@ -172,15 +223,8 @@ namespace GroupFinder.Common.Aad
             }
         }
 
-        private async Task<bool> VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler) where TEntity : AadEntity
+        private async Task<bool> VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler)
         {
-            // Add the API version parameter if needed.
-            if (!url.Contains(Constants.AadGraphApiVersionParameterName))
-            {
-                url += url.Contains("?") ? "&" : "?";
-                url += Constants.AadGraphApiVersionParameterName + "=" + Constants.AadGraphApiVersionNumber;
-            }
-
             var entities = default(IList<TEntity>);
             if (pageHandler != null)
             {
@@ -192,41 +236,12 @@ namespace GroupFinder.Common.Aad
             state.AadNextLink = null;
             state.AadDeltaLink = null;
 
-            // Request the data.
-            var client = await GetClientAsync();
-            this.logger.Log(EventLevel.Verbose, $"Requesting data from \"{url}\"");
-            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
-            using (var responseStream = await response.Content.ReadAsStreamAsync())
-            using (var responseStreamReader = new StreamReader(responseStream))
-            using (var jsonReader = new JsonTextReader(responseStreamReader))
+            // Execute the request and process the results.
+            Func<JsonReader, Task> jsonHandler = async (jsonReader) =>
             {
-                state.LastVisitedUrl = url;
-                state.PageCount++;
-
-                // Check the response.
-                if (response.IsSuccessStatusCode)
-                {
-                    this.logger.Log(EventLevel.Verbose, $"Received response with success status code \"{response.StatusCode}\"");
-                }
-                else
-                {
-                    this.logger.Log(EventLevel.Warning, $"Received response with status code \"{response.StatusCode}\"");
-                }
-
-                // Read the results.
-                var jsonSerializer = new JsonSerializer();
                 while (jsonReader.Read())
                 {
-                    if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "odata.error")
-                    {
-                        // An error was returned.
-                        jsonReader.Read(); // Move to the start of the "odata.error" property.
-                        var error = jsonSerializer.Deserialize<ErrorInfo>(jsonReader);
-                        var errorDisplayMessage = $"{error.Code}: {error.Message.Value}";
-                        this.logger.Log(EventLevel.Error, $"Received OData error response: {errorDisplayMessage}");
-                        throw new InvalidOperationException(errorDisplayMessage);
-                    }
-                    else if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "value")
+                    if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "value")
                     {
                         // Deserialize the "value" array.
                         jsonReader.Read(); // Move to the start of the "value" array.
@@ -236,10 +251,23 @@ namespace GroupFinder.Common.Aad
                         {
                             var entity = jsonSerializer.Deserialize<TEntity>(jsonReader);
                             state.TotalObjectCount++;
-                            if (string.Equals(entity.ObjectType, objectType, StringComparison.Ordinal))
+                            var shouldProcess = true;
+                            var entityDescription = default(string);
+                            var aadEntity = entity as AadEntity;
+                            if (aadEntity != null)
                             {
-                                state.MatchedObjectCount++;
-                                this.logger.Log(EventLevel.Verbose, $"Read object #{state.MatchedObjectCount}: \"{entity.ObjectId}\" ({entity.ObjectType})");
+                                // We have a full-blown AAD entity, check the object type if needed.
+                                entityDescription = $": \"{aadEntity.ObjectId}\" ({aadEntity.ObjectType})";
+                                if (objectType != null && !string.Equals(aadEntity.ObjectType, objectType, StringComparison.Ordinal))
+                                {
+                                    this.logger.Log(EventLevel.Verbose, $"Skipping AAD object \"{aadEntity.ObjectId}\" due to mismatching object type \"{aadEntity.ObjectType}\"");
+                                    shouldProcess = false;
+                                }
+                            }
+                            if (shouldProcess)
+                            {
+                                state.ProcessedObjectCount++;
+                                this.logger.Log(EventLevel.Verbose, $"Read object #{state.ProcessedObjectCount}{entityDescription}");
                                 if (entities != null)
                                 {
                                     entities.Add(entity);
@@ -248,10 +276,6 @@ namespace GroupFinder.Common.Aad
                                 {
                                     await itemHandler(entity, state);
                                 }
-                            }
-                            else
-                            {
-                                this.logger.Log(EventLevel.Verbose, $"Skipping object \"{entity.ObjectId}\" due to mismatching object type \"{entity.ObjectType}\"");
                             }
                             jsonReader.Read(); // Move to the next object.
                         }
@@ -275,14 +299,70 @@ namespace GroupFinder.Common.Aad
                         this.logger.Log(EventLevel.Verbose, $"Determined AAD delta link: {state.AadDeltaLink}");
                     }
                 }
-            }
+            };
+            await ProcessUrlAsync(url, jsonHandler);
 
+            // Call the page handler and see if processing should continue.
             var shouldContinue = true;
             if (pageHandler != null)
             {
                 shouldContinue = await pageHandler(entities, state);
             }
             return shouldContinue;
+        }
+
+        private async Task ProcessUrlAsync(string url, Func<JsonReader, Task> jsonHandler)
+        {
+            // Add the API version parameter if needed.
+            if (!url.Contains(Constants.AadGraphApiVersionParameterName))
+            {
+                url += url.Contains("?") ? "&" : "?";
+                url += Constants.AadGraphApiVersionParameterName + "=" + Constants.AadGraphApiVersionNumber;
+            }
+
+            // Request the data.
+            var client = await GetClientAsync();
+            this.logger.Log(EventLevel.Verbose, $"Requesting data from \"{url}\"");
+            using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+            using (var responseStream = await response.Content.ReadAsStreamAsync())
+            using (var responseStreamReader = new StreamReader(responseStream))
+            using (var jsonReader = new JsonTextReader(responseStreamReader))
+            {
+                // Check the response.
+                if (response.IsSuccessStatusCode)
+                {
+                    // Call the handler to process the data.
+                    this.logger.Log(EventLevel.Verbose, $"Received response with success status code \"{response.StatusCode}\"");
+                    await jsonHandler(jsonReader);
+                }
+                else
+                {
+                    // Read the error if present.
+                    this.logger.Log(EventLevel.Warning, $"Received response with status code \"{response.StatusCode}\"");
+                    var errorMessage = $"The request to \"{url}\" failed with status code {(int)response.StatusCode} ({response.ReasonPhrase}).";
+                    var innerException = default(Exception);
+                    try
+                    {
+                        while (jsonReader.Read())
+                        {
+                            if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "odata.error")
+                            {
+                                // An error was returned.
+                                jsonReader.Read(); // Move to the start of the "odata.error" property.
+                                var error = jsonSerializer.Deserialize<ErrorInfo>(jsonReader);
+                                errorMessage = $"{error.Code}: {error.Message.Value}";
+                                this.logger.Log(EventLevel.Error, $"Received OData error response: {errorMessage}");
+                            }
+                        }
+                    }
+                    catch (Exception exc)
+                    {
+                        // If parsing the JSON body failed, make sure to include the inner exception.
+                        innerException = exc;
+                    }
+                    throw new InvalidOperationException(errorMessage, innerException);
+                }
+            }
         }
 
         private async Task<HttpClient> GetClientAsync()
