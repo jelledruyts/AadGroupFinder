@@ -77,7 +77,7 @@ module app.controllers {
                 $scope.groupInEdit.message = "Saving...";
                 $scope.groupInEdit.messageClass = "text-info";
                 $scope.groupInEdit.isBusy = true;
-                groupFinderSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags)
+                groupFinderSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags, $scope.groupInEdit.isDiscussionList)
                     .success(results => {
                         $scope.groupInEdit.applyChanges();
                         $scope.groupInEdit.message = "Changes were saved. Thanks for helping the community out!";
@@ -97,6 +97,7 @@ module app.controllers {
     class GroupEdit {
         notes: string;
         tags: string[];
+        isDiscussionList: boolean;
         tagToAdd: string;
         message: string;
         messageClass: string;
@@ -105,6 +106,7 @@ module app.controllers {
         constructor(public group: app.models.Group) {
             this.notes = group.notes;
             this.tags = group.tags.slice(0); // Shallow array clone.
+            this.isDiscussionList = group.isDiscussionList;
             this.tagToAdd = null;
             this.isBusy = false;
         }
@@ -112,6 +114,7 @@ module app.controllers {
         applyChanges(): void {
             this.group.notes = this.notes;
             this.group.tags = this.tags;
+            this.group.isDiscussionList = this.isDiscussionList;
         }
 
         addTag(): void {

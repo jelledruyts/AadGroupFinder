@@ -10,6 +10,7 @@
         securityEnabled: boolean;
         tags: string[];
         notes: string;
+        isDiscussionList: boolean;
         score: number;
     }
 }

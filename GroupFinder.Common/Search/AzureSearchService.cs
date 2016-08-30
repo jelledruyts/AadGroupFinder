@@ -22,6 +22,8 @@ namespace GroupFinder.Common.Search
         internal const string FieldNameSecurityEnabled = "securityEnabled";
         internal const string FieldNameTags = "tags";
         internal const string FieldNameNotes = "notes";
+        internal const string FieldNameIsDiscussionList = "isDiscussionList";
+        internal const string FieldNameBoost = "boost";
         private const string ScoringProfileName = "name";
         public const string SuggesterName = "name";
 
@@ -73,6 +75,7 @@ namespace GroupFinder.Common.Search
                 Name = this.indexName,
                 Fields = new[]
                 {
+                    // Base properties.
                     new Field(FieldNameObjectId, DataType.String, analyzerName) { IsKey = true },
                     new Field(FieldNameDisplayName, DataType.String, analyzerName) { IsSearchable = true },
                     new Field(FieldNameDescription, DataType.String, analyzerName) { IsSearchable = true },
@@ -80,8 +83,11 @@ namespace GroupFinder.Common.Search
                     new Field(FieldNameMailEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
                     new Field(FieldNameMailNickname, DataType.String, analyzerName) { IsSearchable = true },
                     new Field(FieldNameSecurityEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
+                    // Search-specific properties.
                     new Field(FieldNameTags, DataType.Collection(DataType.String), analyzerName) { IsSearchable = true, IsFacetable = true, IsFilterable = true },
-                    new Field(FieldNameNotes, DataType.String, analyzerName) { IsSearchable = true }
+                    new Field(FieldNameNotes, DataType.String, analyzerName) { IsSearchable = true },
+                    new Field(FieldNameIsDiscussionList, DataType.Boolean) { IsSearchable = false, IsFilterable = true, IsFacetable = true },
+                    new Field(FieldNameBoost, DataType.Int32) { IsSearchable = false, IsFilterable = true, IsRetrievable = false }
                 },
                 Suggesters = new[]
                 {
@@ -93,7 +99,9 @@ namespace GroupFinder.Common.Search
                     new ScoringProfile(ScoringProfileName)
                     {
                         // Add a lot of weight to the display name and above average weight to the tags and notes as well.
-                        TextWeights = new TextWeights(new Dictionary<string, double> { { FieldNameDisplayName, 2.0 }, { FieldNameTags, 1.5 }, { FieldNameNotes, 1.5 } })
+                        TextWeights = new TextWeights(new Dictionary<string, double> { { FieldNameDisplayName, 2.0 }, { FieldNameTags, 1.5 }, { FieldNameNotes, 1.5 } }),
+                        // Increase the scores based on the calculated boost field.
+                        Functions = new [] { new MagnitudeScoringFunction(FieldNameBoost, 2.0, 0.0, 10.0, true) } // The boost field goes from 0 to 10
                     }
                 }
             };
@@ -139,7 +147,7 @@ namespace GroupFinder.Common.Search
             await this.indexClient.Documents.IndexAsync(batch);
         }
 
-        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes)
+        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes, bool isDiscussionList)
         {
             if (string.IsNullOrWhiteSpace(objectId))
             {
@@ -147,10 +155,15 @@ namespace GroupFinder.Common.Search
             }
             await EnsureInitialized();
             this.logger.Log(EventLevel.Informational, $"Updating group \"{objectId}\"");
+            // Calculate the internal field which contains the boosting factor (ranging from 0 to 10).
+            var boost = 0;
+            boost += isDiscussionList ? 2 : 0;
             var document = new Document();
             document[FieldNameObjectId] = objectId;
             document[FieldNameTags] = tags ?? new string[0];
             document[FieldNameNotes] = notes;
+            document[FieldNameIsDiscussionList] = isDiscussionList;
+            document[FieldNameBoost] = boost;
             var batch = IndexBatch.Merge(new[] { document });
             await this.indexClient.Documents.IndexAsync(batch);
         }

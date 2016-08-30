@@ -6,5 +6,6 @@ namespace GroupFinder.Common
     {
         IList<string> Tags { get; set; }
         string Notes { get; set; }
+        bool IsDiscussionList { get; set; }
     }
 }

@@ -9,6 +9,7 @@ namespace GroupFinder.Common.Search
         public double Score { get; set; }
         public IList<string> Tags { get; set; }
         public string Notes { get; set; }
+        public bool IsDiscussionList { get; set; }
 
         // Base properties.
         public string ObjectId { get; set; }
@@ -28,6 +29,7 @@ namespace GroupFinder.Common.Search
             this.Score = score;
             this.Tags = (IList<string>)properties[AzureSearchService.FieldNameTags];
             this.Notes = (string)properties[AzureSearchService.FieldNameNotes];
+            this.IsDiscussionList = (bool)(properties[AzureSearchService.FieldNameIsDiscussionList] ?? false);
             this.ObjectId = (string)properties[AzureSearchService.FieldNameObjectId];
             this.DisplayName = (string)properties[AzureSearchService.FieldNameDisplayName];
             this.Description = (string)properties[AzureSearchService.FieldNameDescription];

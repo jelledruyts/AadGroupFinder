@@ -18,8 +18,12 @@
             return this.$http.get(this.baseUrl + "groups/search?" + app.models.Constants.ApiVersions.GroupFinder, { params: params });
         }
 
-        updateGroup(objectId: string, notes: string, tags: string[]): ng.IHttpPromise<{}> {
-            var data = { "notes": notes, "tags": tags };
+        updateGroup(objectId: string, notes: string, tags: string[], isDiscussionList: boolean): ng.IHttpPromise<{}> {
+            var data = {
+                "notes": notes,
+                "tags": tags,
+                "isDiscussionList": isDiscussionList
+            };
             return this.$http.patch(this.baseUrl + "groups/" + objectId + "?" + app.models.Constants.ApiVersions.GroupFinder, data);
         }
 

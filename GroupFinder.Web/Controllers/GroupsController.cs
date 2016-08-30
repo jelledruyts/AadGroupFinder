@@ -33,7 +33,7 @@ namespace GroupFinder.Web.Controllers
         [HttpPatch]
         public async Task Patch(string objectId, [FromBody]GroupPatch group)
         {
-            await this.processor.UpdateGroupAsync(objectId, group.Tags, group.Notes);
+            await this.processor.UpdateGroupAsync(objectId, group.Tags, group.Notes, group.IsDiscussionList);
         }
 
         [Route(Constants.ApiRoutePrefix + "/shared")]

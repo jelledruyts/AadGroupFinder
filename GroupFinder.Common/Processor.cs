@@ -187,12 +187,12 @@ namespace GroupFinder.Common
             return this.searchService.FindGroupsAsync(searchText, top, skip);
         }
 
-        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes)
+        public async Task UpdateGroupAsync(string objectId, IList<string> tags, string notes, bool isDiscussionList)
         {
-            await this.searchService.UpdateGroupAsync(objectId, tags, notes);
+            await this.searchService.UpdateGroupAsync(objectId, tags, notes, isDiscussionList);
             if (this.persistentStorageForBackups != null)
             {
-                var backupData = new GroupBackup(objectId, tags, notes);
+                var backupData = new GroupBackup(objectId, tags, notes, isDiscussionList);
                 await this.persistentStorageForBackups.SaveAsync($"groups/{objectId}.json", backupData);
             }
         }
@@ -217,16 +217,18 @@ namespace GroupFinder.Common
             public string ObjectId { get; set; }
             public IList<string> Tags { get; set; }
             public string Notes { get; set; }
+            public bool IsDiscussionList { get; set; }
 
             public GroupBackup()
             {
             }
 
-            public GroupBackup(string objectId, IList<string> tags, string notes)
+            public GroupBackup(string objectId, IList<string> tags, string notes, bool isDiscussionList)
             {
                 this.ObjectId = objectId;
                 this.Tags = tags;
                 this.Notes = notes;
+                this.IsDiscussionList = isDiscussionList;
             }
         }
 
