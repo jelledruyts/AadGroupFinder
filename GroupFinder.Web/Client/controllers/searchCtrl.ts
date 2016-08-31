@@ -43,7 +43,7 @@ module app.controllers {
                         .error(results => {
                             $scope.groups = null;
                             $scope.pageIndex = 0;
-                            $rootScope.setError();
+                            $rootScope.setError(results);
                         })
                         .finally(() => {
                             $rootScope.stopBusy();

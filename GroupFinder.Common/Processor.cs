@@ -110,7 +110,7 @@ namespace GroupFinder.Common
                 // Get the user's peers.
                 this.logger.Log(EventLevel.Informational, $"Getting direct reports for manager \"{manager.UserPrincipalName}\"");
                 var peers = await this.graphClient.GetDirectReportsAsync(manager.UserPrincipalName);
-                var user = peers.SingleOrDefault(p => p.UserPrincipalName == userId || p.ObjectId == userId);
+                var user = peers.SingleOrDefault(p => string.Equals(p.UserPrincipalName, userId, StringComparison.OrdinalIgnoreCase) || string.Equals(p.ObjectId, userId, StringComparison.OrdinalIgnoreCase));
                 var peerUserIds = peers.Select(p => p.UserPrincipalName).ToArray();
 
                 // Get shared group memberships and exclude groups that the user is already a member of.

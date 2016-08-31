@@ -5,16 +5,21 @@ using GroupFinder.Common.Logging;
 using GroupFinder.Common.PersistentStorage;
 using GroupFinder.Common.Search;
 using GroupFinder.Common.Security;
+using GroupFinder.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Diagnostics.Tracing;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace GroupFinder.Web
@@ -86,6 +91,34 @@ namespace GroupFinder.Web
 
             // Add Application Insights monitoring to the request pipeline as a very first middleware.
             app.UseApplicationInsightsRequestTelemetry();
+
+            // Return exceptions as JSON errors in the format defined at https://github.com/Microsoft/api-guidelines/blob/master/Guidelines.md#710-response-formats.
+            var errorJsonSerializerSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver(), NullValueHandling = NullValueHandling.Ignore };
+            app.UseExceptionHandler(errorApp =>
+            {
+                errorApp.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = Constants.JsonContentType;
+                    var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                    if (exceptionHandlerFeature != null)
+                    {
+                        var exception = exceptionHandlerFeature.Error;
+                        var error = default(Error);
+                        var apiException = exception as ApiException;
+                        if (apiException != null)
+                        {
+                            error = new Error(apiException.Code, apiException.Message);
+                        }
+                        else
+                        {
+                            error = new Error("Unexpected Error", exception.Message);
+                        }
+                        var errorResponse = new ErrorResponse(error);
+                        await context.Response.WriteAsync(JsonConvert.SerializeObject(errorResponse, Formatting.None, errorJsonSerializerSettings), Encoding.UTF8);
+                    }
+                });
+            });
 
             // Add Application Insights exceptions handling to the request pipeline.
             // NOTE: Exception middleware should be added after error page and any other error handling middleware.

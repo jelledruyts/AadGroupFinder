@@ -31,7 +31,7 @@ module app.controllers {
                         })
                         .error(results => {
                             $scope.userGroups = null;
-                            $rootScope.setError();
+                            $rootScope.setError(results);
                         })
                         .finally(() => {
                             $rootScope.stopBusy();

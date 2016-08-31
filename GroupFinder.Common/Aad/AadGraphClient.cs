@@ -332,15 +332,15 @@ namespace GroupFinder.Common.Aad
                 if (response.IsSuccessStatusCode)
                 {
                     // Call the handler to process the data.
-                    this.logger.Log(EventLevel.Verbose, $"Received response with success status code \"{response.StatusCode}\"");
+                    this.logger.Log(EventLevel.Verbose, $"Received response with success status code {(int)response.StatusCode} ({response.ReasonPhrase})");
                     await jsonHandler(jsonReader);
                 }
                 else
                 {
                     // Read the error if present.
-                    this.logger.Log(EventLevel.Warning, $"Received response with status code \"{response.StatusCode}\"");
-                    var errorMessage = $"The request to \"{url}\" failed with status code {(int)response.StatusCode} ({response.ReasonPhrase}).";
+                    this.logger.Log(EventLevel.Warning, $"Received response with status code {(int)response.StatusCode} ({response.ReasonPhrase})");
                     var innerException = default(Exception);
+                    var error = default(ErrorInfo);
                     try
                     {
                         while (jsonReader.Read())
@@ -349,18 +349,26 @@ namespace GroupFinder.Common.Aad
                             {
                                 // An error was returned.
                                 jsonReader.Read(); // Move to the start of the "odata.error" property.
-                                var error = jsonSerializer.Deserialize<ErrorInfo>(jsonReader);
-                                errorMessage = $"{error.Code}: {error.Message.Value}";
-                                this.logger.Log(EventLevel.Error, $"Received OData error response: {errorMessage}");
+                                error = jsonSerializer.Deserialize<ErrorInfo>(jsonReader);
                             }
                         }
                     }
                     catch (Exception exc)
                     {
-                        // If parsing the JSON body failed, make sure to include the inner exception.
+                        // If parsing the JSON body failed, make sure to include the parsing exception.
                         innerException = exc;
                     }
-                    throw new InvalidOperationException(errorMessage, innerException);
+                    if (error != null && !string.IsNullOrWhiteSpace(error.Code))
+                    {
+                        var errorMessage = (error.Message == null || string.IsNullOrWhiteSpace(error.Message.Value)) ? error.Code : error.Message.Value;
+                        this.logger.Log(EventLevel.Error, $"Received OData error response from \"{url}\": {error.Code}: {errorMessage}");
+                        throw new ApiException(errorMessage, error.Code);
+                    }
+                    else
+                    {
+                        var errorMessage = $"The request to \"{url}\" failed with status code {(int)response.StatusCode} ({response.ReasonPhrase}).";
+                        throw new InvalidOperationException(errorMessage, innerException);
+                    }
                 }
             }
         }

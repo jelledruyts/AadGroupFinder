@@ -15,7 +15,7 @@
         startBusy(busyMessage?: string): void;
         stopBusy(): void;
         clearMessages(): void;
-        setError(errorMessage?: string): void;
+        setError(error?: app.models.ErrorResponse): void;
     }
 
     class RootCtrl {
@@ -46,8 +46,22 @@
                 $rootScope.warningMessage = null;
                 $rootScope.errorMessage = null;
             }
-            this.$rootScope.setError = function (errorMessage?: string) {
-                if (typeof errorMessage === "undefined" || errorMessage === null) {
+            this.$rootScope.setError = function (errorResponse?: app.models.ErrorResponse) {
+                var errorMessage = "";
+                if (errorResponse !== null) {
+                    if (errorResponse.error !== null) {
+                        if (errorResponse.error.code !== null && errorResponse.error.code.length > 0) {
+                            errorMessage = errorResponse.error.code;
+                        }
+                        if (errorResponse.error.message !== null && errorResponse.error.message.length > 0) {
+                            if (errorMessage.length > 0) {
+                                errorMessage += ": ";
+                            }
+                            errorMessage += errorResponse.error.message;
+                        }
+                    }
+                }
+                if (errorMessage === null || errorMessage.length === 0) {
                     errorMessage = "An error occurred :-( Please try again later.";
                 }
                 $rootScope.errorMessage = errorMessage;

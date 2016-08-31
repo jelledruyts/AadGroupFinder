@@ -99,6 +99,7 @@
     <Compile Include="Aad\AadGraphClient.cs" />
     <Compile Include="Aad\AadGroup.cs" />
     <Compile Include="Aad\AadUser.cs" />
+    <Compile Include="ApiException.cs" />
     <Compile Include="Configuration\AzureADConfiguration.cs" />
     <Compile Include="Configuration\AppConfiguration.cs" />
     <Compile Include="Configuration\AzureSearchConfiguration.cs" />

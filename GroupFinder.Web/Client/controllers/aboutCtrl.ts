@@ -20,7 +20,7 @@ module app.controllers {
                         $scope.status = results;
                     })
                     .error(results => {
-                        $rootScope.setError();
+                        $rootScope.setError(results);
                     })
                     .finally(() => {
                     });

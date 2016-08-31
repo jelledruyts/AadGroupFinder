@@ -26,10 +26,12 @@ module app.controllers {
             this.$scope.autocompleteError = null;
 
             this.$scope.addUserPrincipalName = function () {
-                var index = $scope.selectedUserPrincipalNames.indexOf($scope.userPrincipalName);
-                if (index < 0) {
-                    $scope.selectedUserPrincipalNames.push($scope.userPrincipalName);
-                    $scope.userPrincipalName = null;
+                if ($scope.userPrincipalName !== null && $scope.userPrincipalName.length > 0) {
+                    var index = $scope.selectedUserPrincipalNames.indexOf($scope.userPrincipalName);
+                    if (index < 0) {
+                        $scope.selectedUserPrincipalNames.push($scope.userPrincipalName);
+                        $scope.userPrincipalName = null;
+                    }
                 }
             };
 
@@ -51,7 +53,7 @@ module app.controllers {
                         })
                         .error(results => {
                             $scope.sharedGroupMemberships = null;
-                            $rootScope.setError();
+                            $rootScope.setError(results);
                         })
                         .finally(() => {
                             $rootScope.stopBusy();

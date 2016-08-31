@@ -31,7 +31,7 @@ module app.controllers {
                         })
                         .error(results => {
                             $scope.recommendedGroups = null;
-                            $rootScope.setError();
+                            $rootScope.setError(results);
                         })
                         .finally(() => {
                             $rootScope.stopBusy();
