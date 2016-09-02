@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,23 +17,26 @@ namespace GroupFinder.Web.Controllers
 
         [Route(Constants.ApiRoutePrefix + "/search")]
         [HttpGet]
-        public async Task<IEnumerable<IUser>> Search([FromQuery(Name = "search")]string search, [FromQuery(Name = "$top")]int top = Constants.DefaultPageSize)
+        public async Task<IEnumerable<User>> Search([FromQuery(Name = "search")]string search, [FromQuery(Name = "$top")]int top = Constants.DefaultPageSize)
         {
-            return await this.processor.FindUsersAsync(search, top);
+            var results = await this.processor.FindUsersAsync(search, top);
+            return results.Map();
         }
 
         [Route(Constants.ApiRoutePrefix + "/{userId}/groups")]
         [HttpGet]
-        public async Task<IEnumerable<IGroup>> GetGroups(string userId)
+        public async Task<IEnumerable<Group>> GetGroups(string userId)
         {
-            return await this.processor.GetUserGroupsAsync(userId);
+            var results = await this.processor.GetUserGroupsAsync(userId);
+            return results.Map();
         }
 
         [Route(Constants.ApiRoutePrefix + "/{userId}/recommendedGroups")]
         [HttpGet]
-        public async Task<IEnumerable<RecommendedGroup>> GetRecommendedGroups(string userId)
+        public async Task<IEnumerable<GroupFinder.Web.Models.RecommendedGroup>> GetRecommendedGroups(string userId)
         {
-            return await this.processor.GetRecommendedGroupsAsync(userId);
+            var results = await this.processor.GetRecommendedGroupsAsync(userId);
+            return results.Map();
         }
     }
 }
