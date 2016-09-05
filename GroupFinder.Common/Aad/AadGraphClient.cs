@@ -76,7 +76,11 @@ namespace GroupFinder.Common.Aad
                 var shouldContinue = !top.HasValue || users.Count < top.Value;
                 return Task.FromResult(shouldContinue);
             };
-            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null);
+            Action retryingHandler = () =>
+            {
+                users.Clear();
+            };
+            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null, retryingHandler);
             this.logger.Log(EventLevel.Verbose, $"Retrieved {users.Count} users for search term \"{escapedSearchText}\"");
             if (top.HasValue)
             {
@@ -123,11 +127,16 @@ namespace GroupFinder.Common.Aad
 
             var directReports = new List<IUser>();
             this.logger.Log(EventLevel.Informational, $"Getting direct reports for user \"{userId}\"");
-            await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, (directReport, state) =>
+            Func<AadUser, PagingState, Task> itemHandler = (directReport, state) =>
             {
                 directReports.Add(directReport);
                 return Task.FromResult(0);
-            });
+            };
+            Action retryingHandler = () =>
+            {
+                directReports.Clear();
+            };
+            await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, itemHandler, retryingHandler);
             this.logger.Log(EventLevel.Verbose, $"Retrieved {directReports.Count} direct reports for user \"{userId}\"");
             return directReports;
         }
@@ -164,14 +173,19 @@ namespace GroupFinder.Common.Aad
             // We choose for the 3rd option.
             var groups = new List<IGroup>();
             this.logger.Log(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
-            await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, (group, state) =>
+            Func<AadGroup, PagingState, Task> itemHandler = (group, state) =>
             {
                 if (!mailEnabledOnly || group.MailEnabled)
                 {
                     groups.Add(group);
                 }
                 return Task.FromResult(0);
-            });
+            };
+            Action retryingHandler = () =>
+            {
+                groups.Clear();
+            };
+            await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, itemHandler, retryingHandler);
             this.logger.Log(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
             return groups.OrderBy(g => g.DisplayName).ToArray();
         }
@@ -180,46 +194,86 @@ namespace GroupFinder.Common.Aad
 
         #region Groups
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler)
+        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler)
         {
-            return VisitGroupsAsync(pageHandler, itemHandler, null);
+            return VisitGroupsAsync(pageHandler, itemHandler, retryingHandler, null);
         }
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, string continuationUrl)
+        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler, string continuationUrl)
         {
             this.logger.Log(EventLevel.Informational, $"Retrieving groups");
             var url = string.IsNullOrWhiteSpace(continuationUrl) ? $"{this.aadGraphApiTenantEndpoint}/groups?deltaLink=" : continuationUrl;
-            return VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler);
+            return VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler, retryingHandler);
         }
 
         #endregion
 
         #region Helper Methods
 
-        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler)
+        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler, Action retryingHandler)
         {
-            var state = new PagingState();
-
-            // Visit the first page.
-            var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
-
-            // Keep visiting pages if there are any.
-            while (shouldContinue)
+            var retryAttempt = 0;
+            while (true)
             {
-                var nextPageUrl = default(string);
-                if (!string.IsNullOrWhiteSpace(state.ODataNextLink))
+                try
                 {
-                    nextPageUrl = $"{this.aadGraphApiTenantEndpoint}/{state.ODataNextLink}";
-                }
-                else if (!string.IsNullOrWhiteSpace(state.AadNextLink))
-                {
-                    nextPageUrl = state.AadNextLink;
-                }
-                if (nextPageUrl == null)
-                {
+                    var state = new PagingState();
+                    
+                    // Visit the first page.
+                    var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
+
+                    // Keep visiting pages if there are any.
+                    while (shouldContinue)
+                    {
+                        var nextPageUrl = default(string);
+                        if (!string.IsNullOrWhiteSpace(state.ODataNextLink))
+                        {
+                            nextPageUrl = $"{this.aadGraphApiTenantEndpoint}/{state.ODataNextLink}";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(state.AadNextLink))
+                        {
+                            nextPageUrl = state.AadNextLink;
+                        }
+                        if (nextPageUrl == null)
+                        {
+                            break;
+                        }
+                        shouldContinue = await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler);
+                    }
+
+                    // We're done.
                     break;
                 }
-                shouldContinue = await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler);
+                catch (Exception exc)
+                {
+                    // An exception occurred while processing the pages, see if it's a transient error that can be retried.
+                    var shouldRetry = false;
+                    var apiException = exc as ApiException;
+                    if (apiException != null && string.Equals(apiException.Code, "Directory_ExpiredPageToken", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // This error occurs from time to time, without a clear reason; retry the complete operation.
+                        shouldRetry = true;
+                    }
+
+                    if (shouldRetry && ++retryAttempt > Constants.RetryAttemptsOnTransientError)
+                    {
+                        // We reached the maximum number of retry attempts; rethrow the last exception.
+                        this.logger.Log(EventLevel.Warning, $"Reached maximum retries of paged operation, aborting.");
+                        shouldRetry = false;
+                    }
+                    if (shouldRetry)
+                    {
+                        this.logger.Log(EventLevel.Warning, $"Retrying paged operation due to transient error (attempt {retryAttempt}).");
+                        if (retryingHandler != null)
+                        {
+                            retryingHandler();
+                        }
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
         }
 

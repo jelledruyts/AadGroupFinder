@@ -7,5 +7,7 @@
 
         internal const string AadGraphApiVersionParameterName = "api-version";
         internal const string AadGraphApiVersionNumber = "1.6";
+
+        internal const int RetryAttemptsOnTransientError = 5;
     }
 }

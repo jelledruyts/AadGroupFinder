@@ -174,7 +174,12 @@ namespace GroupFinder.Common
                 await this.persistentStorageForState.SaveAsync(ProcessorStateFileName, processorState);
                 return true;
             };
-            await this.graphClient.VisitGroupsAsync(pageHandler, null, continuationUrl);
+            Action retryingHandler = () =>
+            {
+                // When a paging operation needs to be retried, there isn't much extra we can do.
+                // Processing will re-run but eveything is idempotent so no state needs to be reset.
+            };
+            await this.graphClient.VisitGroupsAsync(pageHandler, null, retryingHandler, continuationUrl);
         }
 
         public Task<IAnnotatedGroup> GetGroupAsync(string objectId)
