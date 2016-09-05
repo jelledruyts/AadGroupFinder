@@ -38,6 +38,7 @@ namespace GroupFinder.Web
                 .AddEnvironmentVariables();
             if (env.IsDevelopment())
             {
+                builder.AddJsonFile(@"Properties/launchSettings.json", optional: false, reloadOnChange: true); // This is for reading out the local SSL port.
                 builder.AddUserSecrets("GroupFinder");
                 builder.AddApplicationInsightsSettings(developerMode: true);
             }
@@ -53,6 +54,9 @@ namespace GroupFinder.Web
             services.AddMvc()
                 .AddMvcOptions(options =>
                 {
+                    // Force HTTPS for Web API (this doesn't affect static files though).
+                    options.Filters.Add(new RequireHttpsAttribute());
+
                     // Force authenticated users globally.
                     var authenticatedUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                     options.Filters.Add(new AuthorizeFilter(authenticatedUserPolicy));
@@ -88,6 +92,26 @@ namespace GroupFinder.Web
             // Configure logging.
             loggerFactory.AddConsole(this.Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            // Force HTTPS for all requests (including non-MVC requests).
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.IsHttps)
+                {
+                    await next();
+                }
+                else
+                {
+                    var host = new HostString(context.Request.Host.Host);
+                    if (env.IsDevelopment())
+                    {
+                        var sslPort = Configuration.GetValue<int>("iisSettings:iisExpress:sslPort");
+                        host = new HostString(context.Request.Host.Host, sslPort);
+                    }
+                    var httpsUrl = $"https://{host}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+                    context.Response.Redirect(httpsUrl, true);
+                }
+            });
 
             // Add Application Insights monitoring to the request pipeline as a very first middleware.
             app.UseApplicationInsightsRequestTelemetry();
