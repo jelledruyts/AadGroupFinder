@@ -58,6 +58,7 @@ module app {
 
             adalProvider.init(
                 {
+                    //anonymousEndpoints: ["api/"], // Enable this for accessing the service anonymously (e.g. for load testing).
                     instance: "https://login.microsoftonline.com/",
                     tenant: "microsoft.com",
                     clientId: "75d75982-5e4e-4147-bf88-7ce98e03b74b",

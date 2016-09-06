@@ -116,7 +116,7 @@ namespace GroupFinder.Web
             // Add Application Insights monitoring to the request pipeline as a very first middleware.
             app.UseApplicationInsightsRequestTelemetry();
 
-            // Return exceptions as JSON errors in the format defined at https://github.com/Microsoft/api-guidelines/blob/master/Guidelines.md#710-response-formats.
+            // Return unhandled exceptions as JSON errors in the format defined at https://github.com/Microsoft/api-guidelines/blob/master/Guidelines.md#710-response-formats.
             var errorJsonSerializerSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver(), NullValueHandling = NullValueHandling.Ignore };
             app.UseExceptionHandler(errorApp =>
             {
