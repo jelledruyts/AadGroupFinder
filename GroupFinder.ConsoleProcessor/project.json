@@ -16,17 +16,22 @@
     "Microsoft.Extensions.Options.ConfigurationExtensions": "1.0.0",
     "Microsoft.Extensions.Configuration.Binder": "1.0.0",
     "Microsoft.IdentityModel.Clients.ActiveDirectory": "3.13.1",
-    "System.Threading.Tasks": "4.0.0"
+    "System.Threading.Tasks": "4.0.0",
+    "GroupFinder.Common": { "target": "project" }
   },
 
   "frameworks": {
     "net452": {
       "dependencies": {
-        "GroupFinder.Common": {
-          "target": "project"
-        }
       }
     }
   },
+
+  "publishOptions": {
+    "include": [
+      "appsettings.json"
+    ]
+  },
+
   "userSecretsId": "GroupFinder"
 }
