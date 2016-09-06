@@ -16,7 +16,9 @@ module app.controllers {
     class RecommendCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: IRecommendScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
-            this.$scope.userPrincipalName = this.$rootScope.userInfo.userName;
+            if (this.$rootScope.userInfo.isAuthenticated) {
+                this.$scope.userPrincipalName = this.$rootScope.userInfo.userName;
+            }
             this.$scope.isAutocompleteBusy = false;
             this.$scope.autocompleteError = null;
             this.$scope.recommendedGroups = null;

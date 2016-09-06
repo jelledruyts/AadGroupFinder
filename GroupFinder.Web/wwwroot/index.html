@@ -45,7 +45,10 @@
                 </ul>
                 <ul class="nav navbar-nav navbar-right ng-cloak" ng-show="userInfo.isAuthenticated">
                     <li><p class="navbar-text">Signed in as {{userInfo.profile.name}}</p></li>
-                    <li><a href="" class="navbar-link" ng-click="logout()">Logout</a></li>
+                    <li><a href="" class="navbar-link" ng-click="logout()">Log Out</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right ng-cloak" ng-hide="userInfo.isAuthenticated">
+                    <li><a href="" class="navbar-link" ng-click="login()">Log In</a></li>
                 </ul>
             </div>
         </div>

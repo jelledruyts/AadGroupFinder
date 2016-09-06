@@ -8,14 +8,14 @@
             <i class="fa fa-spinner fa-spin" aria-hidden="true" ng-show="isAutocompleteBusy"></i>
             <i class="fa fa-exclamation-circle text-danger" aria-hidden="true" title="{{autocompleteError}}" ng-show="autocompleteError !== null && autocompleteError.length > 0"></i>
         </span>
-        <input type="text" id="userPrincipalName" class="form-control" placeholder="Enter a user principal name (e.g. alias@example.org)..." ng-init="initializeAutocomplete('userPrincipalName')" ng-model="userPrincipalName" ng-keyup="$event.keyCode === 13 && getUserGroups()">
+        <input type="text" id="userPrincipalName" class="form-control" placeholder="Enter a user principal name (e.g. alias@example.org)..." ng-init="initializeAutocomplete('userPrincipalName')" ng-model="userPrincipalName" ng-keyup="$event.keyCode === 13 && getRecommendedGroups()">
         <span class="input-group-btn">
             <button class="btn btn-primary" type="button" ng-click="getRecommendedGroups()"><i class="fa fa-search" aria-hidden="true"></i> Get Recommended Groups</button>
         </span>
     </div>
     <div class="margin-top-lg" ng-show="recommendedGroups !== null">
         <div class="alert alert-warning" ng-show="recommendedGroups.length === 0">
-            Nothing found :-(
+            Sorry, we couldn't find any recommendations for you at this time. Please try again later.
         </div>
         <div ng-show="recommendedGroups.length > 0">
             <h4>Found {{recommendedGroups.length}} recommended {{recommendedGroups.length === 1 ? 'group' : 'groups'}}</h4>

@@ -11,6 +11,7 @@
         userInfo: adal.IUserInfo;
 
         isActive(viewLocation: string): boolean;
+        login(): void;
         logout(): void;
         startBusy(busyMessage?: string): void;
         stopBusy(): void;
@@ -25,6 +26,9 @@
             this.$rootScope.isBusy = false;
             this.$rootScope.isActive = function (viewLocation: string) {
                 return viewLocation === $location.path();
+            };
+            this.$rootScope.login = function () {
+                adalService.login();
             };
             this.$rootScope.logout = function () {
                 adalService.logOut();
@@ -46,18 +50,26 @@
                 $rootScope.warningMessage = null;
                 $rootScope.errorMessage = null;
             }
-            this.$rootScope.setError = function (errorResponse?: app.models.ErrorResponse) {
+            this.$rootScope.setError = function (errorResponse?: any) {
                 var errorMessage = "";
                 if (errorResponse !== null) {
-                    if (errorResponse.error !== null) {
-                        if (errorResponse.error.code !== null && errorResponse.error.code.length > 0) {
-                            errorMessage = errorResponse.error.code;
-                        }
-                        if (errorResponse.error.message !== null && errorResponse.error.message.length > 0) {
-                            if (errorMessage.length > 0) {
-                                errorMessage += ": ";
+                    if (typeof errorResponse === "string") {
+                        // An error string.
+                        errorMessage = <string>errorResponse;
+                    }
+                    else if (typeof errorResponse.error != "undefined") {
+                        // A full-blown error object.
+                        errorResponse = <app.models.ErrorResponse>errorResponse;
+                        if (errorResponse.error !== null) {
+                            if (errorResponse.error.code !== null && errorResponse.error.code.length > 0) {
+                                errorMessage = errorResponse.error.code;
                             }
-                            errorMessage += errorResponse.error.message;
+                            if (errorResponse.error.message !== null && errorResponse.error.message.length > 0) {
+                                if (errorMessage.length > 0) {
+                                    errorMessage += ": ";
+                                }
+                                errorMessage += errorResponse.error.message;
+                            }
                         }
                     }
                 }
