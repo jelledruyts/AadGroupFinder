@@ -2,9 +2,9 @@
   "version": "1.0.0-*",
   "buildOptions": {
     "emitEntryPoint": true,
-    "preserveCompilationContext": true,
+    "preserveCompilationContext": false,
     "copyToOutput": {
-      "include": "appsettings.json"
+      "include": [ "appsettings.json", "settings.job" ]
     }
   },
 
@@ -29,7 +29,8 @@
 
   "publishOptions": {
     "include": [
-      "appsettings.json"
+      "appsettings.json",
+      "settings.job"
     ]
   },
 
