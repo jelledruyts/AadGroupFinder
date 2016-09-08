@@ -14,3 +14,6 @@ declare namespace adal {
         loginError: any;
     }
 }
+
+// Toastr
+declare var toastr: any;

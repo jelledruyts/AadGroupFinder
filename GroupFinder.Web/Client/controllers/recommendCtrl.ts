@@ -25,7 +25,6 @@ module app.controllers {
 
             this.$scope.getRecommendedGroups = function () {
                 if ($scope.userPrincipalName !== null && $scope.userPrincipalName.length > 0) {
-                    $rootScope.clearMessages();
                     $rootScope.startBusy();
                     groupFinderSvc.getRecommendedGroups($scope.userPrincipalName)
                         .success(results => {

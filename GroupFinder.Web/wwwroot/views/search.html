@@ -66,6 +66,19 @@
         </div>
     </div>
 
+    <!-- Paging -->
+    <nav aria-label="Page navigation" ng-show="canPageBackward || canPageForward">
+        <ul class="pagination">
+            <li ng-class="{disabled: !canPageBackward}">
+                <a href="" aria-label="Previous" ng-click="pageBackward()" title="Previous"><span aria-hidden="true">&laquo;</span></a>
+            </li>
+            <li class="disabled"><a class="text-small">Page {{pageIndex + 1}}</a></li>
+            <li ng-class="{disabled: !canPageForward}">
+                <a href="" aria-label="Next" ng-click="pageForward()" title="Next"><span aria-hidden="true">&raquo;</span></a>
+            </li>
+        </ul>
+    </nav>
+
     <!-- Group Editor Dialog -->
     <div class="modal fade" id="group-editor-dialog" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">

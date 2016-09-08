@@ -45,7 +45,6 @@ module app.controllers {
 
             this.$scope.getSharedGroupMemberships = function () {
                 if ($scope.selectedUserPrincipalNames.length > 0) {
-                    $rootScope.clearMessages();
                     $rootScope.startBusy();
                     groupFinderSvc.getSharedGroupMemberships($scope.selectedUserPrincipalNames)
                         .success(results => {

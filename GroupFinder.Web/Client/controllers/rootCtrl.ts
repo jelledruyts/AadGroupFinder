@@ -2,11 +2,7 @@
     "use strict";
 
     export interface IRootScope extends ng.IScope {
-        infoMessage: string;
-        successMessage: string;
-        warningMessage: string;
-        errorMessage: string;
-        busyMessage: string;
+        busyToast: any;
         isBusy: boolean;
         userInfo: adal.IUserInfo;
 
@@ -15,41 +11,46 @@
         logout(): void;
         startBusy(busyMessage?: string): void;
         stopBusy(): void;
-        clearMessages(): void;
         setError(error?: app.models.ErrorResponse): void;
     }
 
     class RootCtrl {
         static $inject = ["$rootScope", "$location", "adalAuthenticationService"];
         constructor(private $rootScope: IRootScope, private $location: ng.ILocationService, adalService: any) {
-            this.$rootScope.busyMessage = null;
-            this.$rootScope.isBusy = false;
+            // UI helpers.
             this.$rootScope.isActive = function (viewLocation: string) {
                 return viewLocation === $location.path();
             };
+
+            // Login and Logout.
             this.$rootScope.login = function () {
                 adalService.login();
             };
             this.$rootScope.logout = function () {
                 adalService.logOut();
             };
+
+            // Busy handling.
             this.$rootScope.startBusy = function (busyMessage?: string) {
                 if (typeof busyMessage === "undefined" || busyMessage === null) {
                     busyMessage = "Working on it...";
                 }
-                $rootScope.busyMessage = busyMessage;
+                busyMessage = "<i class='fa fa-spinner fa-spin' aria-hidden='true'></i> " + busyMessage;
+                if ($rootScope.busyToast !== null) {
+                    toastr.clear($rootScope.busyToast);
+                }
+                $rootScope.busyToast = toastr.info(busyMessage, null, { timeOut: 0, extendedTimeOut: 0, closeButton: false });
                 $rootScope.isBusy = true;
             }
             this.$rootScope.stopBusy = function () {
                 $rootScope.isBusy = false;
-                $rootScope.busyMessage = null;
+                if ($rootScope.busyToast !== null) {
+                    toastr.clear($rootScope.busyToast);
+                }
+                $rootScope.busyToast = null;
             }
-            this.$rootScope.clearMessages = function () {
-                $rootScope.infoMessage = null;
-                $rootScope.successMessage = null;
-                $rootScope.warningMessage = null;
-                $rootScope.errorMessage = null;
-            }
+
+            // Error handling.
             this.$rootScope.setError = function (errorResponse?: any) {
                 var errorMessage = "";
                 if (errorResponse !== null) {
@@ -76,9 +77,15 @@
                 if (errorMessage === null || errorMessage.length === 0) {
                     errorMessage = "An error occurred :-( Please try again later.";
                 }
-                $rootScope.errorMessage = errorMessage;
+                toastr.error(errorMessage);
             }
-            this.$rootScope.clearMessages();
+
+            // Initialization.
+            toastr.options.timeOut = 5000;
+            toastr.options.closeButton = true;
+            toastr.options.positionClass = "toast-bottom-full-width";
+            this.$rootScope.busyToast = null;
+            this.$rootScope.isBusy = false;
         }
     }
 

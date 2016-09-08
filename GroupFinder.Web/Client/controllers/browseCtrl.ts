@@ -23,7 +23,6 @@ module app.controllers {
 
             this.$scope.getUserGroups = function () {
                 if ($scope.userPrincipalName !== null && $scope.userPrincipalName.length > 0) {
-                    $rootScope.clearMessages();
                     $rootScope.startBusy();
                     groupFinderSvc.getUserGroups($scope.userPrincipalName)
                         .success(results => {

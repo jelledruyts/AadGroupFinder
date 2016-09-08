@@ -24,6 +24,11 @@
         font-size: 10px;
     }
 
+.header-busy-icon {
+    font-size: 65%;
+    vertical-align: top;
+}
+
 /* Keep the body content from disappearing behind the navbar */
 body {
     padding-top: 70px;

@@ -14,7 +14,6 @@ module app.controllers {
             this.$scope.status = null;
 
             var refreshStatusInternal = function () {
-                $rootScope.clearMessages();
                 groupFinderSvc.getStatus()
                     .success(results => {
                         $scope.status = results;

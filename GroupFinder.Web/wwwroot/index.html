@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
     <link rel="stylesheet" href="css/site.css">
     <script type="text/javascript">
         var appInsights = window.appInsights || function (config) {
@@ -32,6 +33,7 @@
                 </button>
                 <a class="navbar-brand" href="#/">
                     Angelia
+                    <i class="fa fa-spinner fa-spin header-busy-icon ng-cloak" aria-hidden="true" ng-show="isBusy"></i>
                     <small>Greek spirit of messages, tidings and proclamations</small>
                 </a>
             </div>
@@ -54,11 +56,6 @@
         </div>
     </div>
     <div class="container body-content">
-        <div class="alert alert-info ng-cloak" ng-show="isBusy"><i class="fa fa-spinner fa-spin" aria-hidden="true"></i> {{busyMessage}}</div>
-        <div class="alert alert-danger ng-cloak" ng-show="errorMessage !== null">{{errorMessage}}</div>
-        <div class="alert alert-warning ng-cloak" ng-show="warningMessage !== null">{{warningMessage}}</div>
-        <div class="alert alert-success ng-cloak" ng-show="successMessage !== null">{{successMessage}}</div>
-        <div class="alert alert-info ng-cloak" ng-show="infoMessage !== null">{{infoMessage}}</div>
         <div id="content" class="ng-cloak" ng-view></div>
     </div>
     <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
@@ -68,6 +65,7 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     <script src="https://secure.aadcdn.microsoftonline-p.com/lib/1.0.11/js/adal.min.js"></script>
     <script src="https://secure.aadcdn.microsoftonline-p.com/lib/1.0.11/js/adal-angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js "></script>
     <script src="site.js"></script>
 </body>
 </html>

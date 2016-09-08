@@ -33,7 +33,6 @@ module app.controllers {
 
             var findGroupsInternal = function (pageIndex: number) {
                 if ($scope.searchText !== null && $scope.searchText.length > 0) {
-                    $rootScope.clearMessages();
                     $rootScope.startBusy();
                     groupFinderSvc.searchGroups($scope.searchText, $scope.pageSize, $scope.pageSize * pageIndex)
                         .success(results => {
@@ -49,6 +48,7 @@ module app.controllers {
                             $rootScope.stopBusy();
                             $scope.canPageForward = $scope.groups !== null && $scope.groups.length > 0 && $scope.groups.length === $scope.pageSize;
                             $scope.canPageBackward = $scope.groups !== null && $scope.groups.length > 0 && $scope.pageIndex > 0;
+                            window.scrollTo(0, 0);
                         });
                 }
             };
