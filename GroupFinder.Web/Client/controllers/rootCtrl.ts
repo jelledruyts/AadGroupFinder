@@ -12,11 +12,13 @@
         startBusy(busyMessage?: string): void;
         stopBusy(): void;
         setError(error?: app.models.ErrorResponse): void;
+        canJoinGroup(group: app.models.Group): boolean;
+        joinGroup(group: app.models.Group): void;
     }
 
     class RootCtrl {
-        static $inject = ["$rootScope", "$location", "adalAuthenticationService"];
-        constructor(private $rootScope: IRootScope, private $location: ng.ILocationService, adalService: any) {
+        static $inject = ["$rootScope", "$location", "adalAuthenticationService", "configuration"];
+        constructor(private $rootScope: IRootScope, private $location: ng.ILocationService, adalService: any, configuration: appConfig.Configuration) {
             // UI helpers.
             this.$rootScope.isActive = function (viewLocation: string) {
                 return viewLocation === $location.path();
@@ -78,6 +80,20 @@
                     errorMessage = "An error occurred :-( Please try again later.";
                 }
                 toastr.error(errorMessage);
+            }
+
+            // Group handling.
+            this.$rootScope.canJoinGroup = function (group: app.models.Group): boolean {
+                return typeof(configuration.groupJoinServiceUrlTemplate) !== "undefined" && configuration.groupJoinServiceUrlTemplate !== null && configuration.groupJoinServiceUrlTemplate.length > 0;
+            }
+
+            this.$rootScope.joinGroup = function (group: app.models.Group) {
+                var url = configuration.groupJoinServiceUrlTemplate;
+                url = url.replace("{displayName}", group.displayName);
+                url = url.replace("{mail}", group.mail);
+                url = url.replace("{mailNickname}", group.mailNickname);
+                url = url.replace("{objectId}", group.objectId);
+                window.open(url, "_blank");
             }
 
             // Initialization.

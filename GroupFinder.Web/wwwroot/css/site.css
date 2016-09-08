@@ -37,7 +37,11 @@ body {
 
 /* Helper classes */
 .margin-left-md {
-    margin-top: 5px;
+    margin-left: 5px;
+}
+
+.margin-left-lg {
+    margin-left: 10px;
 }
 
 .margin-right-md {
@@ -77,6 +81,6 @@ body {
     font-style: italic;
 }
 
-.group-mail {
+.group-actions {
     font-size: smaller;
 }

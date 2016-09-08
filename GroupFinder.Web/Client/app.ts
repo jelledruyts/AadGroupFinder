@@ -1,7 +1,8 @@
-﻿/// <reference path="models/constants.ts" />
+﻿/// <reference path="appConfig.ts" />
+/// <reference path="models/constants.ts" />
 module app {
     "use strict";
-    angular.module(app.models.Constants.App.AngularAppName, ["ngRoute", "AdalAngular"])
+    angular.module(app.models.Constants.App.AngularAppName, ["ngRoute", "AdalAngular", app.models.Constants.App.AppConfigModuleName])
         // Filters
         .filter("percentage", ["$filter", function ($filter: ng.IFilterService) {
             // This filter makes the assumption that the input will be in decimal form (i.e. 17% is 0.17).
@@ -26,7 +27,7 @@ module app {
             };
         }])
         // Configuration
-        .config(["$routeProvider", "$httpProvider", "adalAuthenticationServiceProvider", function ($routeProvider: ng.route.IRouteProvider, $httpProvider: ng.IHttpProvider, adalProvider: any) {
+        .config(["$routeProvider", "$httpProvider", "adalAuthenticationServiceProvider", "configuration", function ($routeProvider: ng.route.IRouteProvider, $httpProvider: ng.IHttpProvider, adalProvider: any, configuration: appConfig.Configuration) {
             // Configure the routes.
             $routeProvider
                 .when("/", {
@@ -59,9 +60,9 @@ module app {
             adalProvider.init(
                 {
                     //anonymousEndpoints: ["api/"], // Enable this for accessing the service anonymously (e.g. for load testing).
-                    instance: "https://login.microsoftonline.com/",
-                    tenant: "microsoft.com",
-                    clientId: "75d75982-5e4e-4147-bf88-7ce98e03b74b",
+                    instance: configuration.aadInstance,
+                    tenant: configuration.aadTenant,
+                    clientId: configuration.aadClientId,
                     // cacheLocation: "localStorage", // enable this for IE, as sessionStorage does not work for localhost.
                 },
                 $httpProvider

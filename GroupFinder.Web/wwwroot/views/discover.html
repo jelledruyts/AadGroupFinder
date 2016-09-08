@@ -33,7 +33,10 @@
                     <div class="panel panel-{{sharedGroupMembership.percentMatch | bootstrap:'percentage-to-context'}}">
                         <div class="panel-heading">
                             <h3 class="panel-title group-name">{{sharedGroupMembership.group.displayName}} ({{sharedGroupMembership.percentMatch | percentage:0}} match)</h3>
-                            <div class="group-mail"><a ng-href="mailto:{{sharedGroupMembership.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{sharedGroupMembership.group.mail}}</a></div>
+                            <div class="group-actions">
+                                <a ng-href="mailto:{{sharedGroupMembership.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{sharedGroupMembership.group.mail}}</a>
+                                <a href="" class="margin-left-lg" ng-click="joinGroup(sharedGroupMembership.group)" ng-show="canJoinGroup(sharedGroupMembership.group)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <div class="margin-top-md group-description" ng-show="sharedGroupMembership.group.description.length > 0">

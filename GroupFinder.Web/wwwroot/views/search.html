@@ -36,7 +36,10 @@
                                 <span ng-show="group.isDiscussionList" title="This is an open discussion list"><i class="fa fa-bullhorn" aria-hidden="true"></i></span>
                                 {{group.displayName}}
                             </h3>
-                            <div class="group-mail"><a ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{group.mail}}</a></div>
+                            <div class="group-actions">
+                                <a ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{group.mail}}</a>
+                                <a href="" class="margin-left-lg" ng-click="joinGroup(group)" ng-show="canJoinGroup(group)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <div class="margin-top-md group-description" ng-show="group.description.length > 0">

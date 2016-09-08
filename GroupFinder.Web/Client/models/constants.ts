@@ -3,6 +3,7 @@
     export class Constants {
         public static App =
         {
+            AppConfigModuleName: "appConfig",
             AngularAppName: "app"
         };
         public static ControllerNames = {

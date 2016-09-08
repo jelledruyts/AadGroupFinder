@@ -24,7 +24,10 @@
                     <div class="panel panel-info">
                         <div class="panel-heading">
                             <h3 class="panel-title group-name">{{recommendedGroup.group.displayName}} ({{recommendedGroup.score | percentage:0}} score)</h3>
-                            <div class="group-mail"><a ng-href="mailto:{{recommendedGroup.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{recommendedGroup.group.mail}}</a></div>
+                            <div class="group-actions">
+                                <a ng-href="mailto:{{recommendedGroup.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{recommendedGroup.group.mail}}</a>
+                                <a href="" class="margin-left-lg" ng-click="joinGroup(recommendedGroup.group)" ng-show="canJoinGroup(recommendedGroup.group)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
+                            </div>
                         </div>
                         <div class="panel-body">
                             <div class="margin-top-md group-description" ng-show="recommendedGroup.group.description.length > 0">
