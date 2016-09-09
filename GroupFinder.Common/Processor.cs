@@ -115,10 +115,24 @@ namespace GroupFinder.Common
 
                 // Get shared group memberships and exclude groups that the user is already a member of.
                 var sharedGroupMemberships = await GetSharedGroupMembershipsAsync(peerUserIds, SharedGroupMembershipType.Multiple, true);
-                recommendedGroups = sharedGroupMemberships
+                recommendedGroups.AddRange(sharedGroupMemberships
                     .Where(g => !g.UserIds.Contains(user.UserPrincipalName))
                     .Select(g => new RecommendedGroup(g.Group, g.PercentMatch, RecommendedGroupReasons.SharedGroupMembershipOfPeers))
-                    .ToList();
+                    .ToList());
+            }
+            else
+            {
+                var ceoRecommendedGroup = new AadGroup
+                {
+                    ObjectId = "00000000-0000-0000-0000-000000000000",
+                    DisplayName = "CEO Self-Help",
+                    Description = "It seems you're on top of the foodchain. Whow. We could recommend reaching out to your peers in other companies - but honestly, you wouldn't be here if you hadn't already. Congratulations and keep up the good work :-)",
+                    Mail = "ceo-selfhelp",
+                    MailEnabled = true,
+                    MailNickname = "ceo-selfhelp",
+                    SecurityEnabled = false
+                };
+                recommendedGroups.Add(new RecommendedGroup(ceoRecommendedGroup, 1.0, RecommendedGroupReasons.SharedGroupMembershipOfPeers));
             }
             return recommendedGroups;
         }

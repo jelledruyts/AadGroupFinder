@@ -113,7 +113,22 @@ namespace GroupFinder.Common.Aad
                 return Task.FromResult(0);
             };
             var url = $"{this.aadGraphApiTenantEndpoint}/users/{userId}/manager";
-            await ProcessUrlAsync(url, jsonHandler);
+            try
+            {
+                await ProcessUrlAsync(url, jsonHandler);
+            }
+            catch (ApiException exc)
+            {
+                if (string.Equals(exc.Code, "Request_ResourceNotFound", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Request_ResourceNotFound: Resource not found for the segment 'manager'.
+                    return null;
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return manager;
         }
@@ -218,7 +233,7 @@ namespace GroupFinder.Common.Aad
                 try
                 {
                     var state = new PagingState();
-                    
+
                     // Visit the first page.
                     var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
 
