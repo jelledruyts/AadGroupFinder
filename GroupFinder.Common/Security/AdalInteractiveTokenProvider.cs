@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using GroupFinder.Common.Logging;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Threading.Tasks;
 
@@ -8,8 +9,8 @@ namespace GroupFinder.Common.Security
     {
         private Uri redirectUri;
 
-        public AdalInteractiveTokenProvider(string tenant, string clientId, TokenCache cache, Uri redirectUri)
-            : base(tenant, clientId, cache)
+        public AdalInteractiveTokenProvider(ILogger logger, string tenant, string clientId, TokenCache cache, Uri redirectUri)
+            : base(logger, tenant, clientId, cache)
         {
             if (redirectUri == null)
             {

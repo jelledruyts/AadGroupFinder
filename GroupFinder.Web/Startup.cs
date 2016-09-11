@@ -176,7 +176,7 @@ namespace GroupFinder.Web
 
             var cache = new PersistentStorageTokenCache(logger, persistentStorageForState, appConfig.AzureAD.TokenCacheFileName);
             await cache.LoadAsync();
-            var tokenProvider = new AdalSilentTokenProvider(appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, cache);
+            var tokenProvider = new AdalSilentTokenProvider(logger, appConfig.AzureAD.Tenant, appConfig.AzureAD.ClientId, cache);
             var graphClient = new AadGraphClient(logger, appConfig.AzureAD.Tenant, tokenProvider);
 
             return new Processor(logger, persistentStorageForState, persistentStorageForBackups, graphClient, searchService);

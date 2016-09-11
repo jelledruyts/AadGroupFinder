@@ -1,12 +1,13 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using GroupFinder.Common.Logging;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Security
 {
     public class AdalSilentTokenProvider : AdalTokenProviderBase
     {
-        public AdalSilentTokenProvider(string tenant, string clientId, TokenCache cache)
-            : base(tenant, clientId, cache)
+        public AdalSilentTokenProvider(ILogger logger, string tenant, string clientId, TokenCache cache)
+            : base(logger, tenant, clientId, cache)
         {
         }
 

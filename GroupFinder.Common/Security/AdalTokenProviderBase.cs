@@ -1,5 +1,7 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using GroupFinder.Common.Logging;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
+using System.Diagnostics.Tracing;
 using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Security
@@ -10,8 +12,12 @@ namespace GroupFinder.Common.Security
         protected string ClientId { get; private set; }
         protected AuthenticationContext AuthenticationContext { get; private set; }
 
-        public AdalTokenProviderBase(string tenant, string clientId, TokenCache cache)
+        protected AdalTokenProviderBase(ILogger logger, string tenant, string clientId, TokenCache cache)
         {
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
             if (string.IsNullOrWhiteSpace(tenant))
             {
                 throw new ArgumentException($"The \"{nameof(tenant)}\" parameter is required.", nameof(tenant));
@@ -27,6 +33,7 @@ namespace GroupFinder.Common.Security
             this.Tenant = tenant;
             this.ClientId = clientId;
             this.AuthenticationContext = new AuthenticationContext(Constants.AadEndpoint + this.Tenant, true, cache);
+            LoggerCallbackHandler.Callback = new AdalLogAdapter(logger);
         }
 
         public Task<string> GetAccessTokenAsync()
@@ -35,5 +42,37 @@ namespace GroupFinder.Common.Security
         }
 
         protected abstract Task<string> GetAccessTokenCoreAsync();
+
+        private class AdalLogAdapter : IAdalLogCallback
+        {
+            private readonly ILogger logger;
+
+            public AdalLogAdapter(ILogger logger)
+            {
+                this.logger = logger;
+            }
+
+            public void Log(LogLevel level, string message)
+            {
+                this.logger.Log(GetEventLevel(level), message);
+            }
+
+            private static EventLevel GetEventLevel(LogLevel level)
+            {
+                switch (level)
+                {
+                    case LogLevel.Information:
+                        return EventLevel.Informational;
+                    case LogLevel.Verbose:
+                        return EventLevel.Verbose;
+                    case LogLevel.Warning:
+                        return EventLevel.Warning;
+                    case LogLevel.Error:
+                        return EventLevel.Error;
+                    default:
+                        return EventLevel.Informational;
+                }
+            }
+        }
     }
 }
