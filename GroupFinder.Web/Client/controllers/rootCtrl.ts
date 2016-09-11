@@ -13,7 +13,7 @@
         stopBusy(): void;
         setError(error?: app.models.ErrorResponse): void;
         canJoinGroup(group: app.models.Group): boolean;
-        joinGroup(group: app.models.Group): void;
+        getJoinGroupLink(group: app.models.Group): void;
     }
 
     class RootCtrl {
@@ -86,14 +86,13 @@
             this.$rootScope.canJoinGroup = function (group: app.models.Group): boolean {
                 return typeof(configuration.groupJoinServiceUrlTemplate) !== "undefined" && configuration.groupJoinServiceUrlTemplate !== null && configuration.groupJoinServiceUrlTemplate.length > 0;
             }
-
-            this.$rootScope.joinGroup = function (group: app.models.Group) {
+            this.$rootScope.getJoinGroupLink = function (group: app.models.Group) {
                 var url = configuration.groupJoinServiceUrlTemplate;
-                url = url.replace("{displayName}", group.displayName);
-                url = url.replace("{mail}", group.mail);
-                url = url.replace("{mailNickname}", group.mailNickname);
-                url = url.replace("{objectId}", group.objectId);
-                window.open(url, "_blank");
+                url = url.replace("{displayName}", encodeURIComponent(group.displayName));
+                url = url.replace("{mail}", encodeURIComponent(group.mail));
+                url = url.replace("{mailNickname}", encodeURIComponent(group.mailNickname));
+                url = url.replace("{objectId}", encodeURIComponent(group.objectId));
+                return url;
             }
 
             // Initialization.

@@ -54,7 +54,7 @@ namespace GroupFinder.Common.Security
 
             public void Log(LogLevel level, string message)
             {
-                this.logger.Log(GetEventLevel(level), message);
+                this.logger.Log(GetEventLevel(level), $"[ADAL:{level.ToString()}] {message}");
             }
 
             private static EventLevel GetEventLevel(LogLevel level)
@@ -62,7 +62,8 @@ namespace GroupFinder.Common.Security
                 switch (level)
                 {
                     case LogLevel.Information:
-                        return EventLevel.Informational;
+                        // Output Information messages from ADAL as Verbose application messages.
+                        return EventLevel.Verbose;
                     case LogLevel.Verbose:
                         return EventLevel.Verbose;
                     case LogLevel.Warning:

@@ -25,8 +25,8 @@
                         <div class="panel-heading">
                             <h3 class="panel-title group-name">{{userGroup.displayName}}</h3>
                             <div class="group-actions">
-                                <a ng-href="mailto:{{userGroup.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{userGroup.mail}}</a>
-                                <a href="" class="margin-left-lg" ng-click="joinGroup(userGroup)" ng-show="canJoinGroup(userGroup)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
+                                <a title="Email this group" ng-href="mailto:{{userGroup.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{userGroup.mail}}</a>
+                                <a class="margin-left-lg" title="Become a member of this group" target="_blank" ng-href="{{getJoinGroupLink(userGroup)}}" ng-show="canJoinGroup(userGroup)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
                             </div>
                         </div>
                         <div class="panel-body">
