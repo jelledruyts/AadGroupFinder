@@ -68,7 +68,7 @@ namespace GroupFinder.Common.Search
 
         public async Task InitializeAsync()
         {
-            this.logger.Log(EventLevel.Informational, "Ensuring Azure Search index is initialized");
+            await this.logger.LogAsync(EventLevel.Informational, "Ensuring Azure Search index is initialized");
             var analyzerName = AnalyzerName.EnMicrosoft;
             var index = new Index
             {
@@ -114,7 +114,7 @@ namespace GroupFinder.Common.Search
 
         public async Task<SearchServiceStatistics> GetStatisticsAsync()
         {
-            this.logger.Log(EventLevel.Informational, $"Retrieving Azure Search index statistics");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving Azure Search index statistics");
             var statistics = await this.serviceClient.Indexes.GetStatisticsAsync(this.indexName);
             return new SearchServiceStatistics(statistics.DocumentCount, statistics.StorageSize);
         }
@@ -130,10 +130,9 @@ namespace GroupFinder.Common.Search
                 return;
             }
             await EnsureInitialized();
-            this.logger.Log(EventLevel.Informational, $"Upserting {groups.Count()} group(s)");
+            await this.logger.LogAsync(EventLevel.Informational, $"Upserting {groups.Count()} group(s)");
             var batch = IndexBatch.MergeOrUpload(groups.Select(g =>
             {
-                this.logger.Log(EventLevel.Verbose, $"Upserting \"{g.ObjectId}\" ({g.DisplayName})");
                 var doc = new Document();
                 doc[FieldNameObjectId] = g.ObjectId;
                 doc[FieldNameDisplayName] = g.DisplayName;
@@ -154,7 +153,7 @@ namespace GroupFinder.Common.Search
                 throw new ArgumentException($"The \"{nameof(objectId)}\" parameter is required.", nameof(objectId));
             }
             await EnsureInitialized();
-            this.logger.Log(EventLevel.Informational, $"Updating group \"{objectId}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Updating group \"{objectId}\"");
             // Calculate the internal field which contains the boosting factor (ranging from 0 to 10).
             var boost = 0;
             boost += isDiscussionList ? 2 : 0;
@@ -179,7 +178,7 @@ namespace GroupFinder.Common.Search
                 return;
             }
             await EnsureInitialized();
-            this.logger.Log(EventLevel.Warning, $"Deleting {objectIds.Count()} group(s)");
+            await this.logger.LogAsync(EventLevel.Warning, $"Deleting {objectIds.Count()} group(s)");
             var batch = IndexBatch.Delete(FieldNameObjectId, objectIds);
             await this.indexClient.Documents.IndexAsync(batch);
         }
@@ -195,7 +194,7 @@ namespace GroupFinder.Common.Search
                 throw new ArgumentException($"The \"{nameof(objectId)}\" parameter is required.", nameof(objectId));
             }
             await EnsureInitialized();
-            this.logger.Log(EventLevel.Informational, $"Retrieving group \"{objectId}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group \"{objectId}\"");
             var result = await this.indexClient.Documents.GetAsync(objectId);
             return new SearchGroup(0.0, result);
         }
@@ -207,14 +206,14 @@ namespace GroupFinder.Common.Search
                 throw new ArgumentException($"The \"{nameof(searchText)}\" parameter is required.", nameof(searchText));
             }
             await EnsureInitialized();
-            this.logger.Log(EventLevel.Informational, $"Searching for \"{searchText}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Searching for \"{searchText}\"");
             var parameters = new SearchParameters
             {
                 Top = top,
                 Skip = skip
             };
             var result = await this.indexClient.Documents.SearchAsync(searchText, parameters);
-            this.logger.Log(EventLevel.Informational, $"Search for \"{searchText}\" resulted in {result.Results.Count} results");
+            await this.logger.LogAsync(EventLevel.Informational, $"Search for \"{searchText}\" resulted in {result.Results.Count} results");
             var groups = new List<IGroupSearchResult>();
             foreach (var documentResult in result.Results)
             {

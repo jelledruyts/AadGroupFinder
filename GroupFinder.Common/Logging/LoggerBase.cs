@@ -2,6 +2,7 @@
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
@@ -19,15 +20,16 @@ namespace GroupFinder.Common.Logging
             this.minimumLogLevel = minimumLogLevel;
         }
 
-        public void Log(EventLevel level, string message)
+        public Task LogAsync(EventLevel level, string message)
         {
             if (level <= this.minimumLogLevel)
             {
-                LogCore(level, message);
+                return LogCoreAsync(level, message);
             }
+            return Task.FromResult(0);
         }
 
-        protected abstract void LogCore(EventLevel level, string message);
+        protected abstract Task LogCoreAsync(EventLevel level, string message);
 
         protected string GetFormattedMessage(EventLevel level, string message)
         {

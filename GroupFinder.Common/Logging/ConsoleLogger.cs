@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Tracing;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
@@ -10,9 +11,10 @@ namespace GroupFinder.Common.Logging
         {
         }
 
-        protected override void LogCore(EventLevel level, string message)
+        protected override Task LogCoreAsync(EventLevel level, string message)
         {
             Write(GetConsoleColor(level), GetFormattedMessage(level, message) + Environment.NewLine);
+            return Task.FromResult(0);
         }
 
         private static void Write(ConsoleColor color, string message)

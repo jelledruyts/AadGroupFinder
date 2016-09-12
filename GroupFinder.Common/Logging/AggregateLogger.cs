@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Tracing;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
@@ -12,12 +14,10 @@ namespace GroupFinder.Common.Logging
             this.loggers = loggers ?? new ILogger[0];
         }
 
-        public void Log(EventLevel level, string message)
+        public Task LogAsync(EventLevel level, string message)
         {
-            foreach (var logger in this.loggers)
-            {
-                logger.Log(level, message);
-            }
+            var tasks = this.loggers.Select(l => l.LogAsync(level, message));
+            return Task.WhenAll(tasks);
         }
     }
 }

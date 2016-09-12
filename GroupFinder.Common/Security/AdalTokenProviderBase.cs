@@ -54,7 +54,8 @@ namespace GroupFinder.Common.Security
 
             public void Log(LogLevel level, string message)
             {
-                this.logger.Log(GetEventLevel(level), $"[ADAL:{level.ToString()}] {message}");
+                // Do not "await" the logging to complete.
+                this.logger.LogAsync(GetEventLevel(level), $"[ADAL:{level.ToString()}] {message}");
             }
 
             private static EventLevel GetEventLevel(LogLevel level)

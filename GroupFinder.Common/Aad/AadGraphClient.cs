@@ -59,7 +59,7 @@ namespace GroupFinder.Common.Aad
             }
 
             var users = new List<IUser>();
-            this.logger.Log(EventLevel.Informational, $"Retrieving users for search term \"{searchText}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving users for search term \"{searchText}\"");
             var escapedSearchText = Uri.EscapeUriString(searchText);
             // Search for the user in all potentially interesting fields in the directory.
             // Note that only the 'startswith' filter is available so we cannot use a 'contains' type of matching.
@@ -81,7 +81,7 @@ namespace GroupFinder.Common.Aad
                 users.Clear();
             };
             await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null, retryingHandler);
-            this.logger.Log(EventLevel.Verbose, $"Retrieved {users.Count} users for search term \"{escapedSearchText}\"");
+            await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {users.Count} users for search term \"{escapedSearchText}\"");
             if (top.HasValue)
             {
                 users = users.Take(top.Value).ToList();
@@ -96,21 +96,20 @@ namespace GroupFinder.Common.Aad
                 throw new ArgumentException($"The \"{nameof(userId)}\" parameter is required.", nameof(userId));
             }
 
-            this.logger.Log(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
             var manager = default(IUser);
-            Func<JsonReader, Task> jsonHandler = (jsonReader) =>
+            Func<JsonReader, Task> jsonHandler = async (jsonReader) =>
             {
                 var entity = jsonSerializer.Deserialize<AadUser>(jsonReader);
                 if (string.Equals(entity.ObjectType, AadUser.ObjectTypeName, StringComparison.Ordinal))
                 {
-                    this.logger.Log(EventLevel.Verbose, $"Read object: \"{entity.ObjectId}\" ({entity.ObjectType})");
+                    await this.logger.LogAsync(EventLevel.Verbose, $"Read object: \"{entity.ObjectId}\" ({entity.ObjectType})");
                     manager = entity;
                 }
                 else
                 {
-                    this.logger.Log(EventLevel.Verbose, $"Skipping object \"{entity.ObjectId}\" due to mismatching object type \"{entity.ObjectType}\"");
+                    await this.logger.LogAsync(EventLevel.Verbose, $"Skipping object \"{entity.ObjectId}\" due to mismatching object type \"{entity.ObjectType}\"");
                 }
-                return Task.FromResult(0);
             };
             var url = $"{this.aadGraphApiTenantEndpoint}/users/{userId}/manager";
             try
@@ -141,7 +140,7 @@ namespace GroupFinder.Common.Aad
             }
 
             var directReports = new List<IUser>();
-            this.logger.Log(EventLevel.Informational, $"Getting direct reports for user \"{userId}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Getting direct reports for user \"{userId}\"");
             Func<AadUser, PagingState, Task> itemHandler = (directReport, state) =>
             {
                 directReports.Add(directReport);
@@ -152,7 +151,7 @@ namespace GroupFinder.Common.Aad
                 directReports.Clear();
             };
             await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, itemHandler, retryingHandler);
-            this.logger.Log(EventLevel.Verbose, $"Retrieved {directReports.Count} direct reports for user \"{userId}\"");
+            await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {directReports.Count} direct reports for user \"{userId}\"");
             return directReports;
         }
 
@@ -187,7 +186,7 @@ namespace GroupFinder.Common.Aad
 
             // We choose for the 3rd option.
             var groups = new List<IGroup>();
-            this.logger.Log(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
             Func<AadGroup, PagingState, Task> itemHandler = (group, state) =>
             {
                 if (!mailEnabledOnly || group.MailEnabled)
@@ -201,7 +200,7 @@ namespace GroupFinder.Common.Aad
                 groups.Clear();
             };
             await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, itemHandler, retryingHandler);
-            this.logger.Log(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
+            await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
             return groups.OrderBy(g => g.DisplayName).ToArray();
         }
 
@@ -214,11 +213,11 @@ namespace GroupFinder.Common.Aad
             return VisitGroupsAsync(pageHandler, itemHandler, retryingHandler, null);
         }
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler, string continuationUrl)
+        public async Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler, string continuationUrl)
         {
-            this.logger.Log(EventLevel.Informational, $"Retrieving groups");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving groups");
             var url = string.IsNullOrWhiteSpace(continuationUrl) ? $"{this.aadGraphApiTenantEndpoint}/groups?deltaLink=" : continuationUrl;
-            return VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler, retryingHandler);
+            await VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler, retryingHandler);
         }
 
         #endregion
@@ -273,12 +272,12 @@ namespace GroupFinder.Common.Aad
                     if (shouldRetry && ++retryAttempt > Constants.RetryAttemptsOnTransientError)
                     {
                         // We reached the maximum number of retry attempts; rethrow the last exception.
-                        this.logger.Log(EventLevel.Warning, $"Reached maximum retries of paged operation, aborting.");
+                        await this.logger.LogAsync(EventLevel.Warning, $"Reached maximum retries of paged operation, aborting.");
                         shouldRetry = false;
                     }
                     if (shouldRetry)
                     {
-                        this.logger.Log(EventLevel.Warning, $"Retrying paged operation due to transient error (attempt {retryAttempt}).");
+                        await this.logger.LogAsync(EventLevel.Warning, $"Retrying paged operation due to transient error (attempt {retryAttempt}).");
                         if (retryingHandler != null)
                         {
                             retryingHandler();
@@ -329,14 +328,14 @@ namespace GroupFinder.Common.Aad
                                 entityDescription = $": \"{aadEntity.ObjectId}\" ({aadEntity.ObjectType})";
                                 if (objectType != null && !string.Equals(aadEntity.ObjectType, objectType, StringComparison.Ordinal))
                                 {
-                                    this.logger.Log(EventLevel.Verbose, $"Skipping AAD object \"{aadEntity.ObjectId}\" due to mismatching object type \"{aadEntity.ObjectType}\"");
+                                    await this.logger.LogAsync(EventLevel.Verbose, $"Skipping AAD object \"{aadEntity.ObjectId}\" due to mismatching object type \"{aadEntity.ObjectType}\"");
                                     shouldProcess = false;
                                 }
                             }
                             if (shouldProcess)
                             {
                                 state.ProcessedObjectCount++;
-                                this.logger.Log(EventLevel.Verbose, $"Read object #{state.ProcessedObjectCount}{entityDescription}");
+                                await this.logger.LogAsync(EventLevel.Verbose, $"Read object #{state.ProcessedObjectCount}{entityDescription}");
                                 if (entities != null)
                                 {
                                     entities.Add(entity);
@@ -353,19 +352,19 @@ namespace GroupFinder.Common.Aad
                     {
                         // Read the link to retrieve the next page of data.
                         state.ODataNextLink = jsonReader.ReadAsString();
-                        this.logger.Log(EventLevel.Verbose, $"Determined OData next page link: {state.ODataNextLink}");
+                        await this.logger.LogAsync(EventLevel.Verbose, $"Determined OData next page link: {state.ODataNextLink}");
                     }
                     else if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "aad.nextLink")
                     {
                         // Read the link to retrieve the next page of data.
                         state.AadNextLink = jsonReader.ReadAsString();
-                        this.logger.Log(EventLevel.Verbose, $"Determined AAD next page link: {state.AadNextLink}");
+                        await this.logger.LogAsync(EventLevel.Verbose, $"Determined AAD next page link: {state.AadNextLink}");
                     }
                     else if (jsonReader.TokenType == JsonToken.PropertyName && (string)jsonReader.Value == "aad.deltaLink")
                     {
                         // Read the link to retrieve the next delta.
                         state.AadDeltaLink = jsonReader.ReadAsString();
-                        this.logger.Log(EventLevel.Verbose, $"Determined AAD delta link: {state.AadDeltaLink}");
+                        await this.logger.LogAsync(EventLevel.Verbose, $"Determined AAD delta link: {state.AadDeltaLink}");
                     }
                 }
             };
@@ -391,7 +390,7 @@ namespace GroupFinder.Common.Aad
 
             // Request the data.
             var client = await GetClientAsync();
-            this.logger.Log(EventLevel.Verbose, $"Requesting data from \"{url}\"");
+            await this.logger.LogAsync(EventLevel.Verbose, $"Requesting data from \"{url}\"");
             using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
             using (var responseStream = await response.Content.ReadAsStreamAsync())
             using (var responseStreamReader = new StreamReader(responseStream))
@@ -401,13 +400,13 @@ namespace GroupFinder.Common.Aad
                 if (response.IsSuccessStatusCode)
                 {
                     // Call the handler to process the data.
-                    this.logger.Log(EventLevel.Verbose, $"Received response with success status code {(int)response.StatusCode} ({response.ReasonPhrase})");
+                    await this.logger.LogAsync(EventLevel.Verbose, $"Received response with success status code {(int)response.StatusCode} ({response.ReasonPhrase})");
                     await jsonHandler(jsonReader);
                 }
                 else
                 {
                     // Read the error if present.
-                    this.logger.Log(EventLevel.Warning, $"Received response with status code {(int)response.StatusCode} ({response.ReasonPhrase})");
+                    await this.logger.LogAsync(EventLevel.Warning, $"Received response with status code {(int)response.StatusCode} ({response.ReasonPhrase})");
                     var innerException = default(Exception);
                     var error = default(ErrorInfo);
                     try
@@ -430,7 +429,7 @@ namespace GroupFinder.Common.Aad
                     if (error != null && !string.IsNullOrWhiteSpace(error.Code))
                     {
                         var errorMessage = (error.Message == null || string.IsNullOrWhiteSpace(error.Message.Value)) ? error.Code : error.Message.Value;
-                        this.logger.Log(EventLevel.Error, $"Received OData error response from \"{url}\": {error.Code}: {errorMessage}");
+                        await this.logger.LogAsync(EventLevel.Error, $"Received OData error response from \"{url}\": {error.Code}: {errorMessage}");
                         throw new ApiException(errorMessage, error.Code);
                     }
                     else

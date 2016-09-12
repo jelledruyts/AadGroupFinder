@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Tracing;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
@@ -10,9 +11,10 @@ namespace GroupFinder.Common.Logging
         {
         }
 
-        public void Log(EventLevel level, string message)
+        public Task LogAsync(EventLevel level, string message)
         {
             // Do nothing.
+            return Task.FromResult(0);
         }
     }
 }

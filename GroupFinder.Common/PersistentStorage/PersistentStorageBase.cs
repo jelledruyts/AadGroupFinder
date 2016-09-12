@@ -36,7 +36,7 @@ namespace GroupFinder.Common.PersistentStorage
             }
             else
             {
-                this.Logger.Log(EventLevel.Verbose, $"File not found at \"{fileName}\", creating new instance");
+                await this.Logger.LogAsync(EventLevel.Verbose, $"File not found at \"{fileName}\", creating new instance");
                 return new T();
             }
         }
@@ -48,17 +48,18 @@ namespace GroupFinder.Common.PersistentStorage
             return SaveAsync(fileName, fileContentsRaw);
         }
 
-        public Task<byte[]> LoadAsync(string fileName)
+        public async Task<byte[]> LoadAsync(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 throw new ArgumentException($"The \"{nameof(fileName)}\" parameter is required.", nameof(fileName));
             }
-            this.Logger.Log(EventLevel.Verbose, $"Loading \"{fileName}\" from persistent storage");
-            return LoadCoreAsync(fileName);
+            await this.Logger.LogAsync(EventLevel.Verbose, $"Loading \"{fileName}\" from persistent storage");
+            var fileContents = await LoadCoreAsync(fileName);
+            return fileContents;
         }
 
-        public Task SaveAsync(string fileName, byte[] fileContents)
+        public async Task SaveAsync(string fileName, byte[] fileContents)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
@@ -68,18 +69,18 @@ namespace GroupFinder.Common.PersistentStorage
             {
                 throw new ArgumentNullException(nameof(fileContents));
             }
-            this.Logger.Log(EventLevel.Verbose, $"Saving \"{fileName}\" to persistent storage");
-            return SaveCoreAsync(fileName, fileContents);
+            await this.Logger.LogAsync(EventLevel.Verbose, $"Saving \"{fileName}\" to persistent storage");
+            await SaveCoreAsync(fileName, fileContents);
         }
 
-        public Task DeleteAsync(string fileName)
+        public async Task DeleteAsync(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 throw new ArgumentException($"The \"{nameof(fileName)}\" parameter is required.", nameof(fileName));
             }
-            this.Logger.Log(EventLevel.Verbose, $"Deleting \"{fileName}\" from persistent storage");
-            return DeleteCoreAsync(fileName);
+            await this.Logger.LogAsync(EventLevel.Verbose, $"Deleting \"{fileName}\" from persistent storage");
+            await DeleteCoreAsync(fileName);
         }
 
         #endregion

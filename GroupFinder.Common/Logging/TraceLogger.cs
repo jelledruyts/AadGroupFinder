@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.Tracing;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
@@ -10,7 +11,7 @@ namespace GroupFinder.Common.Logging
         {
         }
 
-        protected override void LogCore(EventLevel level, string message)
+        protected override Task LogCoreAsync(EventLevel level, string message)
         {
             var formattedMessage = GetFormattedMessage(level, message);
             switch (level)
@@ -29,6 +30,7 @@ namespace GroupFinder.Common.Logging
                     Trace.TraceInformation(formattedMessage);
                     break;
             }
+            return Task.FromResult(0);
         }
     }
 }

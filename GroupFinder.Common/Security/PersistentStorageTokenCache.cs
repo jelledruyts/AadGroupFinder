@@ -31,7 +31,7 @@ namespace GroupFinder.Common.Security
 
         public async Task LoadAsync()
         {
-            this.logger.Log(EventLevel.Verbose, $"Loading token cache from \"{this.fileName}\" file in persistent storage");
+            await this.logger.LogAsync(EventLevel.Verbose, $"Loading token cache from \"{this.fileName}\" file in persistent storage");
             var cacheData = await this.persistentStorage.LoadAsync(this.fileName);
             this.Deserialize(cacheData);
         }
@@ -39,7 +39,8 @@ namespace GroupFinder.Common.Security
         public override void Clear()
         {
             base.Clear();
-            this.logger.Log(EventLevel.Verbose, $"Deleting token cache from \"{this.fileName}\" file in persistent storage");
+            // Do not "await" the logging to complete.
+            this.logger.LogAsync(EventLevel.Verbose, $"Deleting token cache from \"{this.fileName}\" file in persistent storage");
             this.persistentStorage.DeleteAsync(this.fileName).Wait();
         }
 
@@ -47,7 +48,7 @@ namespace GroupFinder.Common.Security
         {
             if (this.HasStateChanged)
             {
-                this.logger.Log(EventLevel.Verbose, $"Saving token cache to \"{this.fileName}\" file in persistent storage");
+                this.logger.LogAsync(EventLevel.Verbose, $"Saving token cache to \"{this.fileName}\" file in persistent storage");
                 var state = this.Serialize();
                 this.persistentStorage.SaveAsync(this.fileName, state).Wait();
             }

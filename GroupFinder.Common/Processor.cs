@@ -74,11 +74,11 @@ namespace GroupFinder.Common
             {
                 throw new ArgumentException($"The \"{nameof(userIds)}\" parameter is required and needs to have at least one item.", nameof(userIds));
             }
-            this.logger.Log(EventLevel.Informational, $"Retrieving all group memberships for {userIds.Count} user(s)");
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving all group memberships for {userIds.Count} user(s)");
             var userTasks = userIds.Select(u => this.graphClient.GetDirectGroupMembershipsAsync(u, mailEnabledOnly));
             var userGroupLists = await Task.WhenAll(userTasks);
 
-            this.logger.Log(EventLevel.Informational, "Processing shared group memberships");
+            await this.logger.LogAsync(EventLevel.Informational, "Processing shared group memberships");
             var sharedGroupMembershipsDictionary = new Dictionary<IGroup, IList<string>>();
             for (var i = 0; i < userIds.Count; i++)
             {
@@ -103,12 +103,12 @@ namespace GroupFinder.Common
             var recommendedGroups = new List<RecommendedGroup>();
 
             // Get recommended groups based on the user's peers (i.e. who share the same manager).
-            this.logger.Log(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
+            await this.logger.LogAsync(EventLevel.Informational, $"Getting manager for user \"{userId}\"");
             var manager = await this.graphClient.GetUserManagerAsync(userId);
             if (manager != null)
             {
                 // Get the user's peers.
-                this.logger.Log(EventLevel.Informational, $"Getting direct reports for manager \"{manager.UserPrincipalName}\"");
+                await this.logger.LogAsync(EventLevel.Informational, $"Getting direct reports for manager \"{manager.UserPrincipalName}\"");
                 var peers = await this.graphClient.GetDirectReportsAsync(manager.UserPrincipalName);
                 var user = peers.SingleOrDefault(p => string.Equals(p.UserPrincipalName, userId, StringComparison.OrdinalIgnoreCase) || string.Equals(p.ObjectId, userId, StringComparison.OrdinalIgnoreCase));
                 var peerUserIds = peers.Select(p => p.UserPrincipalName).ToArray();
@@ -143,19 +143,19 @@ namespace GroupFinder.Common
             var continuationUrl = processorState.GroupSyncContinuationUrl;
             if (processorState.LastGroupSyncStartedTime == null && processorState.LastGroupSyncCompletedTime != null)
             {
-                this.logger.Log(EventLevel.Informational, $"Starting new group synchronization; last synchronization completed at {processorState.LastGroupSyncCompletedTime}");
+                await this.logger.LogAsync(EventLevel.Informational, $"Starting new group synchronization; last synchronization completed at {processorState.LastGroupSyncCompletedTime}");
                 processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
             }
             else
             {
                 if (string.IsNullOrWhiteSpace(continuationUrl))
                 {
-                    this.logger.Log(EventLevel.Informational, "Starting initial group synchronization");
+                    await this.logger.LogAsync(EventLevel.Informational, "Starting initial group synchronization");
                     processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
                 }
                 else
                 {
-                    this.logger.Log(EventLevel.Informational, $"Continuing incomplete group synchronization started at {processorState.LastGroupSyncStartedTime}");
+                    await this.logger.LogAsync(EventLevel.Informational, $"Continuing incomplete group synchronization started at {processorState.LastGroupSyncStartedTime}");
                 }
             }
             Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler = async (groups, state) =>
@@ -180,7 +180,7 @@ namespace GroupFinder.Common
                 }
                 else if (!string.IsNullOrWhiteSpace(state.AadDeltaLink))
                 {
-                    this.logger.Log(EventLevel.Informational, "Synchronization of groups complete");
+                    await this.logger.LogAsync(EventLevel.Informational, "Synchronization of groups complete");
                     processorState.GroupSyncContinuationUrl = state.AadDeltaLink;
                     processorState.LastGroupSyncStartedTime = null;
                     processorState.LastGroupSyncCompletedTime = DateTimeOffset.UtcNow;

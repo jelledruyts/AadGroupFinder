@@ -238,7 +238,7 @@ namespace GroupFinder.ConsoleProcessor
             while (true)
             {
                 await SynchronizeGroupsOnceAsync(processor);
-                logger.Log(EventLevel.Informational, $"Waiting {waitTime} to start next group synchronization");
+                await logger.LogAsync(EventLevel.Informational, $"Waiting {waitTime} to start next group synchronization");
                 await Task.Delay(waitTime);
             }
         }

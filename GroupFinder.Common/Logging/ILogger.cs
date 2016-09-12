@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics.Tracing;
+using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Logging
 {
     public interface ILogger
     {
-        void Log(EventLevel level, string message);
+        Task LogAsync(EventLevel level, string message);
     }
 }
