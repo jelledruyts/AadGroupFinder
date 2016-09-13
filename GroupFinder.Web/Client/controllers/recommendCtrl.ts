@@ -16,6 +16,7 @@ module app.controllers {
     class RecommendCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: IRecommendScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("Recommend");
             if (this.$rootScope.userInfo.isAuthenticated) {
                 this.$scope.userPrincipalName = this.$rootScope.userInfo.userName;
             }
@@ -26,6 +27,7 @@ module app.controllers {
             this.$scope.getRecommendedGroups = function () {
                 if ($scope.userPrincipalName !== null && $scope.userPrincipalName.length > 0) {
                     $rootScope.startBusy();
+                    appInsights.trackEvent("GetRecommendedGroups");
                     groupFinderSvc.getRecommendedGroups($scope.userPrincipalName)
                         .success(results => {
                             $scope.recommendedGroups = results;

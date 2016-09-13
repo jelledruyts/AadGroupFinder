@@ -31,6 +31,11 @@
             this.$rootScope.logout = function () {
                 adalService.logOut();
             };
+            this.$rootScope.$on("adal:loginSuccess", function () {
+                if ($rootScope.userInfo.isAuthenticated) {
+                    appInsights.setAuthenticatedUserContext($rootScope.userInfo.userName);
+                }
+            });
 
             // Busy handling.
             this.$rootScope.startBusy = function (busyMessage?: string) {
@@ -84,7 +89,7 @@
 
             // Group handling.
             this.$rootScope.canJoinGroup = function (group: app.models.Group): boolean {
-                return typeof(configuration.groupJoinServiceUrlTemplate) !== "undefined" && configuration.groupJoinServiceUrlTemplate !== null && configuration.groupJoinServiceUrlTemplate.length > 0;
+                return typeof (configuration.groupJoinServiceUrlTemplate) !== "undefined" && configuration.groupJoinServiceUrlTemplate !== null && configuration.groupJoinServiceUrlTemplate.length > 0;
             }
             this.$rootScope.getJoinGroupLink = function (group: app.models.Group) {
                 var url = configuration.groupJoinServiceUrlTemplate;

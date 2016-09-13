@@ -17,3 +17,6 @@ declare namespace adal {
 
 // Toastr
 declare var toastr: any;
+
+// Application Insights
+declare var appInsights: Microsoft.ApplicationInsights.IAppInsights;

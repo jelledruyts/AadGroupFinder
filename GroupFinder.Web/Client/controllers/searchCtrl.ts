@@ -23,6 +23,7 @@ module app.controllers {
     class SearchCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: ISearchScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("Search");
             this.$scope.searchText = null;
             this.$scope.groups = null;
             this.$scope.pageSize = 25;
@@ -34,6 +35,7 @@ module app.controllers {
             var findGroupsInternal = function (pageIndex: number) {
                 if ($scope.searchText !== null && $scope.searchText.length > 0) {
                     $rootScope.startBusy();
+                    appInsights.trackEvent("SearchGroups");
                     groupFinderSvc.searchGroups($scope.searchText, $scope.pageSize, $scope.pageSize * pageIndex)
                         .success(results => {
                             $scope.groups = results;
@@ -77,6 +79,7 @@ module app.controllers {
                 $scope.groupInEdit.message = "Saving...";
                 $scope.groupInEdit.messageClass = "text-info";
                 $scope.groupInEdit.isBusy = true;
+                appInsights.trackEvent("UpdateGroup");
                 groupFinderSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags, $scope.groupInEdit.isDiscussionList)
                     .success(results => {
                         $scope.groupInEdit.applyChanges();

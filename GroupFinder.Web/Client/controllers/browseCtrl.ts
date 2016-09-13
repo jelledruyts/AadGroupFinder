@@ -16,6 +16,7 @@ module app.controllers {
     class BrowseCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: IBrowseScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("Browse");
             this.$scope.userPrincipalName = null;
             this.$scope.isAutocompleteBusy = false;
             this.$scope.autocompleteError = null;
@@ -24,6 +25,7 @@ module app.controllers {
             this.$scope.getUserGroups = function () {
                 if ($scope.userPrincipalName !== null && $scope.userPrincipalName.length > 0) {
                     $rootScope.startBusy();
+                    appInsights.trackEvent("GetUserGroups");
                     groupFinderSvc.getUserGroups($scope.userPrincipalName)
                         .success(results => {
                             $scope.userGroups = results;

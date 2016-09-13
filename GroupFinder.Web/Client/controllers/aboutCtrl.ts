@@ -11,6 +11,7 @@ module app.controllers {
     class AboutCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: IAboutScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("About");
             this.$scope.status = null;
 
             var refreshStatusInternal = function () {

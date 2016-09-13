@@ -19,6 +19,7 @@ module app.controllers {
     class DiscoverCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
         constructor(private $scope: IDiscoverScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("Discover");
             this.$scope.userPrincipalName = null;
             this.$scope.selectedUserPrincipalNames = [];
             this.$scope.sharedGroupMemberships = null;
@@ -46,6 +47,7 @@ module app.controllers {
             this.$scope.getSharedGroupMemberships = function () {
                 if ($scope.selectedUserPrincipalNames.length > 0) {
                     $rootScope.startBusy();
+                    appInsights.trackEvent("GetSharedGroupMemberships");
                     groupFinderSvc.getSharedGroupMemberships($scope.selectedUserPrincipalNames)
                         .success(results => {
                             $scope.sharedGroupMemberships = results;
