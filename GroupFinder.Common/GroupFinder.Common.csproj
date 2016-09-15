@@ -105,19 +105,22 @@
     <Compile Include="Configuration\AzureSearchConfiguration.cs" />
     <Compile Include="Configuration\AzureStorageConfiguration.cs" />
     <Compile Include="Configuration\ProcessorConfiguration.cs" />
-    <Compile Include="IAnnotatedGroup.cs" />
-    <Compile Include="IGroupAnnotation.cs" />
-    <Compile Include="IGroup.cs" />
-    <Compile Include="IGroupSearchResult.cs" />
-    <Compile Include="IUser.cs" />
+    <Compile Include="Models\Group.cs" />
+    <Compile Include="Models\IAnnotatedGroup.cs" />
+    <Compile Include="Models\IGroupAnnotation.cs" />
+    <Compile Include="Models\IGroup.cs" />
+    <Compile Include="Models\IGroupSearchResult.cs" />
+    <Compile Include="Models\IPartialGroup.cs" />
+    <Compile Include="Models\IUser.cs" />
     <Compile Include="Logging\AggregateLogger.cs" />
     <Compile Include="Logging\ConsoleLogger.cs" />
     <Compile Include="Logging\DebugLogger.cs" />
+    <Compile Include="Models\Optional.cs" />
     <Compile Include="PersistentStorage\AzureBlobStorage.cs" />
     <Compile Include="PersistentStorage\FileStorage.cs" />
     <Compile Include="PersistentStorage\PersistentStorageBase.cs" />
-    <Compile Include="RecommendedGroup.cs" />
-    <Compile Include="RecommendedGroupReasons.cs" />
+    <Compile Include="Models\RecommendedGroup.cs" />
+    <Compile Include="Models\RecommendedGroupReasons.cs" />
     <Compile Include="Search\AzureSearchService.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Aad\ErrorInfo.cs" />
@@ -139,9 +142,9 @@
     <Compile Include="Security\AdalTokenProviderBase.cs" />
     <Compile Include="Security\ITokenProvider.cs" />
     <Compile Include="Security\PersistentStorageTokenCache.cs" />
-    <Compile Include="ServiceStatus.cs" />
-    <Compile Include="SharedGroupMembership.cs" />
-    <Compile Include="SharedGroupMembershipType.cs" />
+    <Compile Include="Models\ServiceStatus.cs" />
+    <Compile Include="Models\SharedGroupMembership.cs" />
+    <Compile Include="Models\SharedGroupMembershipType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

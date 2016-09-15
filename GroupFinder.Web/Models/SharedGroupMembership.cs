@@ -14,7 +14,7 @@ namespace GroupFinder.Web.Models
         {
         }
 
-        public SharedGroupMembership(GroupFinder.Common.SharedGroupMembership value)
+        public SharedGroupMembership(GroupFinder.Common.Models.SharedGroupMembership value)
         {
             if (value == null)
             {

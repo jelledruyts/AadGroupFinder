@@ -1,4 +1,4 @@
-﻿using GroupFinder.Common;
+﻿using GroupFinder.Common.Models;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -35,22 +35,22 @@ namespace GroupFinder.Web.Models
             return value?.Select(g => g.Map());
         }
 
-        public static RecommendedGroup Map(this GroupFinder.Common.RecommendedGroup value)
+        public static RecommendedGroup Map(this GroupFinder.Common.Models.RecommendedGroup value)
         {
             return new RecommendedGroup(value);
         }
 
-        public static IEnumerable<RecommendedGroup> Map(this IEnumerable<GroupFinder.Common.RecommendedGroup> value)
+        public static IEnumerable<RecommendedGroup> Map(this IEnumerable<GroupFinder.Common.Models.RecommendedGroup> value)
         {
             return value?.Select(r => r.Map());
         }
 
-        public static SharedGroupMembership Map(this GroupFinder.Common.SharedGroupMembership value)
+        public static SharedGroupMembership Map(this GroupFinder.Common.Models.SharedGroupMembership value)
         {
             return new SharedGroupMembership(value);
         }
 
-        public static IEnumerable<SharedGroupMembership> Map(this IList<GroupFinder.Common.SharedGroupMembership> value)
+        public static IEnumerable<SharedGroupMembership> Map(this IList<GroupFinder.Common.Models.SharedGroupMembership> value)
         {
             return value?.Select(s => s.Map());
         }

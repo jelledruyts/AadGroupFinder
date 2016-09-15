@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Models
 {
     public class SharedGroupMembership
     {

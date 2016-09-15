@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common.Logging;
+using GroupFinder.Common.Models;
 using GroupFinder.Common.Security;
 using Newtonsoft.Json;
 using System;
@@ -80,7 +81,7 @@ namespace GroupFinder.Common.Aad
             {
                 users.Clear();
             };
-            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null, retryingHandler);
+            await VisitPagedArrayAsync<AadUser>(url, AadUser.ObjectTypeName, pageHandler, null, retryingHandler, null);
             await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {users.Count} users for search term \"{escapedSearchText}\"");
             if (top.HasValue)
             {
@@ -114,7 +115,7 @@ namespace GroupFinder.Common.Aad
             var url = $"{this.aadGraphApiTenantEndpoint}/users/{userId}/manager";
             try
             {
-                await ProcessUrlAsync(url, jsonHandler);
+                await ProcessUrlAsync(url, jsonHandler, null);
             }
             catch (ApiException exc)
             {
@@ -150,7 +151,7 @@ namespace GroupFinder.Common.Aad
             {
                 directReports.Clear();
             };
-            await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, itemHandler, retryingHandler);
+            await VisitPagedArrayAsync<AadUser>($"{aadGraphApiTenantEndpoint}/users/{userId}/directReports", null, null, itemHandler, retryingHandler, null);
             await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {directReports.Count} direct reports for user \"{userId}\"");
             return directReports;
         }
@@ -189,9 +190,9 @@ namespace GroupFinder.Common.Aad
             await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group memberships for user \"{user}\"");
             Func<AadGroup, PagingState, Task> itemHandler = (group, state) =>
             {
-                if (!mailEnabledOnly || group.MailEnabled)
+                if (!mailEnabledOnly || (group.MailEnabled.HasValue && group.MailEnabled.Value == true))
                 {
-                    groups.Add(group);
+                    groups.Add(new Group(group));
                 }
                 return Task.FromResult(0);
             };
@@ -199,7 +200,7 @@ namespace GroupFinder.Common.Aad
             {
                 groups.Clear();
             };
-            await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, itemHandler, retryingHandler);
+            await VisitPagedArrayAsync<AadGroup>($"{this.aadGraphApiTenantEndpoint}/users/{user}/memberOf", AadGroup.ObjectTypeName, null, itemHandler, retryingHandler, null);
             await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {groups.Count} group memberships for user \"{user}\"");
             return groups.OrderBy(g => g.DisplayName).ToArray();
         }
@@ -208,23 +209,18 @@ namespace GroupFinder.Common.Aad
 
         #region Groups
 
-        public Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler)
-        {
-            return VisitGroupsAsync(pageHandler, itemHandler, retryingHandler, null);
-        }
-
-        public async Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler, string continuationUrl)
+        public async Task VisitGroupsAsync(Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler, Func<AadGroup, PagingState, Task> itemHandler, Action retryingHandler, string continuationUrl, IDictionary<string, string> additionalHeaders)
         {
             await this.logger.LogAsync(EventLevel.Informational, $"Retrieving groups");
             var url = string.IsNullOrWhiteSpace(continuationUrl) ? $"{this.aadGraphApiTenantEndpoint}/groups?deltaLink=" : continuationUrl;
-            await VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler, retryingHandler);
+            await VisitPagedArrayAsync<AadGroup>(url, AadGroup.ObjectTypeName, pageHandler, itemHandler, retryingHandler, additionalHeaders);
         }
 
         #endregion
 
         #region Helper Methods
 
-        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler, Action retryingHandler)
+        private async Task VisitPagedArrayAsync<TEntity>(string url, string objectType, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler, Action retryingHandler, IDictionary<string, string> additionalHeaders)
         {
             var retryAttempt = 0;
             while (true)
@@ -234,7 +230,7 @@ namespace GroupFinder.Common.Aad
                     var state = new PagingState();
 
                     // Visit the first page.
-                    var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler);
+                    var shouldContinue = await VisitPagedArrayAsync(url, objectType, state, pageHandler, itemHandler, additionalHeaders);
 
                     // Keep visiting pages if there are any.
                     while (shouldContinue)
@@ -252,7 +248,7 @@ namespace GroupFinder.Common.Aad
                         {
                             break;
                         }
-                        shouldContinue = await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler);
+                        shouldContinue = await VisitPagedArrayAsync(nextPageUrl, objectType, state, pageHandler, itemHandler, additionalHeaders);
                     }
 
                     // We're done.
@@ -291,7 +287,7 @@ namespace GroupFinder.Common.Aad
             }
         }
 
-        private async Task<bool> VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler)
+        private async Task<bool> VisitPagedArrayAsync<TEntity>(string url, string objectType, PagingState state, Func<IList<TEntity>, PagingState, Task<bool>> pageHandler, Func<TEntity, PagingState, Task> itemHandler, IDictionary<string, string> additionalHeaders)
         {
             var entities = default(IList<TEntity>);
             if (pageHandler != null)
@@ -368,7 +364,7 @@ namespace GroupFinder.Common.Aad
                     }
                 }
             };
-            await ProcessUrlAsync(url, jsonHandler);
+            await ProcessUrlAsync(url, jsonHandler, additionalHeaders);
 
             // Call the page handler and see if processing should continue.
             var shouldContinue = true;
@@ -379,7 +375,7 @@ namespace GroupFinder.Common.Aad
             return shouldContinue;
         }
 
-        private async Task ProcessUrlAsync(string url, Func<JsonReader, Task> jsonHandler)
+        private async Task ProcessUrlAsync(string url, Func<JsonReader, Task> jsonHandler, IDictionary<string, string> additionalHeaders)
         {
             // Add the API version parameter if needed.
             if (!url.Contains(Constants.AadGraphApiVersionParameterName))
@@ -389,7 +385,7 @@ namespace GroupFinder.Common.Aad
             }
 
             // Request the data.
-            var client = await GetClientAsync();
+            var client = await GetClientAsync(additionalHeaders);
             await this.logger.LogAsync(EventLevel.Verbose, $"Requesting data from \"{url}\"");
             using (var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
             using (var responseStream = await response.Content.ReadAsStreamAsync())
@@ -441,11 +437,18 @@ namespace GroupFinder.Common.Aad
             }
         }
 
-        private async Task<HttpClient> GetClientAsync()
+        private async Task<HttpClient> GetClientAsync(IDictionary<string, string> additionalHeaders)
         {
             var accessToken = await this.tokenProvider.GetAccessTokenAsync();
             var client = new HttpClient();
             client.DefaultRequestHeaders.Add("Authorization", "Bearer " + accessToken);
+            if (additionalHeaders != null)
+            {
+                foreach (var item in additionalHeaders)
+                {
+                    client.DefaultRequestHeaders.Add(item.Key, item.Value);
+                }
+            }
             return client;
         }
 

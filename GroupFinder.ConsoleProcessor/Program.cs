@@ -2,6 +2,7 @@
 using GroupFinder.Common.Aad;
 using GroupFinder.Common.Configuration;
 using GroupFinder.Common.Logging;
+using GroupFinder.Common.Models;
 using GroupFinder.Common.PersistentStorage;
 using GroupFinder.Common.Search;
 using GroupFinder.Common.Security;

@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Common.Models;
 using GroupFinder.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GroupFinder.Common
+namespace GroupFinder.Common.Models
 {
     public class ServiceStatus
     {

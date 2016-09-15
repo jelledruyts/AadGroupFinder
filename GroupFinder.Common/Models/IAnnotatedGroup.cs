@@ -1,4 +1,4 @@
-﻿namespace GroupFinder.Common
+﻿namespace GroupFinder.Common.Models
 {
     public interface IAnnotatedGroup : IGroup, IGroupAnnotation
     {

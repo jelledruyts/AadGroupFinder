@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Common.Models;
 using System.Collections.Generic;
 
 namespace GroupFinder.Web.Models

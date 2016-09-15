@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common.Logging;
+using GroupFinder.Common.Models;
 using Microsoft.Azure.Search;
 using Microsoft.Azure.Search.Models;
 using System;
@@ -123,7 +124,7 @@ namespace GroupFinder.Common.Search
 
         #region Upsert & Update Groups
 
-        public async Task UpsertGroupsAsync(IEnumerable<IGroup> groups)
+        public async Task UpsertGroupsAsync(IEnumerable<IPartialGroup> groups)
         {
             if (groups == null || !groups.Any())
             {
@@ -135,12 +136,30 @@ namespace GroupFinder.Common.Search
             {
                 var doc = new Document();
                 doc[FieldNameObjectId] = g.ObjectId;
-                doc[FieldNameDisplayName] = g.DisplayName;
-                doc[FieldNameDescription] = g.Description;
-                doc[FieldNameMail] = g.Mail;
-                doc[FieldNameMailEnabled] = g.MailEnabled;
-                doc[FieldNameMailNickname] = g.MailNickname;
-                doc[FieldNameSecurityEnabled] = g.SecurityEnabled;
+                if (g.DisplayName.HasValue)
+                {
+                    doc[FieldNameDisplayName] = g.DisplayName.Value;
+                }
+                if (g.Description.HasValue)
+                {
+                    doc[FieldNameDescription] = g.Description.Value;
+                }
+                if (g.Mail.HasValue)
+                {
+                    doc[FieldNameMail] = g.Mail.Value;
+                }
+                if (g.MailEnabled.HasValue)
+                {
+                    doc[FieldNameMailEnabled] = g.MailEnabled.Value;
+                }
+                if (g.MailNickname.HasValue)
+                {
+                    doc[FieldNameMailNickname] = g.MailNickname.Value;
+                }
+                if (g.SecurityEnabled.HasValue)
+                {
+                    doc[FieldNameSecurityEnabled] = g.SecurityEnabled.Value;
+                }
                 return doc;
             }));
             await this.indexClient.Documents.IndexAsync(batch);

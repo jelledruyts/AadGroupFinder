@@ -1,4 +1,4 @@
-﻿namespace GroupFinder.Common
+﻿namespace GroupFinder.Common.Models
 {
     public enum SharedGroupMembershipType
     {

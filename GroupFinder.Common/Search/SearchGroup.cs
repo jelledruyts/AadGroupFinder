@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GroupFinder.Common.Models;
+using System;
 using System.Collections.Generic;
 
 namespace GroupFinder.Common.Search

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using GroupFinder.Common.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace GroupFinder.Common.Search
@@ -7,7 +8,7 @@ namespace GroupFinder.Common.Search
     {
         Task InitializeAsync();
         Task<SearchServiceStatistics> GetStatisticsAsync();
-        Task UpsertGroupsAsync(IEnumerable<IGroup> groups);
+        Task UpsertGroupsAsync(IEnumerable<IPartialGroup> groups);
         Task DeleteGroupsAsync(IEnumerable<string> objectId);
         Task<IAnnotatedGroup> GetGroupAsync(string objectId);
         Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip);

@@ -13,7 +13,7 @@ namespace GroupFinder.Web.Models
         {
         }
 
-        public RecommendedGroup(GroupFinder.Common.RecommendedGroup value)
+        public RecommendedGroup(GroupFinder.Common.Models.RecommendedGroup value)
         {
             if (value == null)
             {

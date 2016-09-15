@@ -1,4 +1,5 @@
 ﻿using GroupFinder.Common;
+using GroupFinder.Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 

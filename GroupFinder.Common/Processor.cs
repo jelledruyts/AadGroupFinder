@@ -1,5 +1,6 @@
 ﻿using GroupFinder.Common.Aad;
 using GroupFinder.Common.Logging;
+using GroupFinder.Common.Models;
 using GroupFinder.Common.PersistentStorage;
 using GroupFinder.Common.Search;
 using System;
@@ -122,7 +123,7 @@ namespace GroupFinder.Common
             }
             else
             {
-                var ceoRecommendedGroup = new AadGroup
+                var ceoRecommendedGroup = new Group
                 {
                     ObjectId = "00000000-0000-0000-0000-000000000000",
                     DisplayName = "CEO Self-Help",
@@ -141,10 +142,12 @@ namespace GroupFinder.Common
         {
             var processorState = await this.persistentStorageForState.LoadAsync<ProcessorState>(ProcessorStateFileName);
             var continuationUrl = processorState.GroupSyncContinuationUrl;
+            bool retrieveOnlyChangedProperties;
             if (processorState.LastGroupSyncStartedTime == null && processorState.LastGroupSyncCompletedTime != null)
             {
                 await this.logger.LogAsync(EventLevel.Informational, $"Starting new group synchronization; last synchronization completed at {processorState.LastGroupSyncCompletedTime}");
                 processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
+                retrieveOnlyChangedProperties = true;
             }
             else
             {
@@ -152,16 +155,18 @@ namespace GroupFinder.Common
                 {
                     await this.logger.LogAsync(EventLevel.Informational, "Starting initial group synchronization");
                     processorState.LastGroupSyncStartedTime = DateTimeOffset.UtcNow;
+                    retrieveOnlyChangedProperties = false;
                 }
                 else
                 {
                     await this.logger.LogAsync(EventLevel.Informational, $"Continuing incomplete group synchronization started at {processorState.LastGroupSyncStartedTime}");
+                    retrieveOnlyChangedProperties = processorState.LastGroupSyncCompletedTime != null;
                 }
             }
             Func<IList<AadGroup>, PagingState, Task<bool>> pageHandler = async (groups, state) =>
             {
                 // Handle the data in the current page.
-                var groupsToProcess = groups.Where(g => g.MailEnabled);
+                var groupsToProcess = groups.Where(g => g.MailEnabled.HasValue && g.MailEnabled.Value == true);
                 var groupsToUpsert = groupsToProcess.Where(g => !g.IsDeleted);
                 if (groupsToUpsert.Any())
                 {
@@ -193,7 +198,12 @@ namespace GroupFinder.Common
                 // When a paging operation needs to be retried, there isn't much extra we can do.
                 // Processing will re-run but eveything is idempotent so no state needs to be reset.
             };
-            await this.graphClient.VisitGroupsAsync(pageHandler, null, retryingHandler, continuationUrl);
+            var additionalHeaders = new Dictionary<string, string>();
+            if (retrieveOnlyChangedProperties)
+            {
+                additionalHeaders["ocp-aad-dq-include-only-changed-properties"] = "true";
+            }
+            await this.graphClient.VisitGroupsAsync(pageHandler, null, retryingHandler, continuationUrl, additionalHeaders);
         }
 
         public Task<IAnnotatedGroup> GetGroupAsync(string objectId)

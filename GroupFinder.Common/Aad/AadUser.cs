@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using GroupFinder.Common.Models;
+using System.Diagnostics;
 
 namespace GroupFinder.Common.Aad
 {
