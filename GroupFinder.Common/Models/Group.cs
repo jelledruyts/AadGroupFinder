@@ -59,5 +59,15 @@ namespace GroupFinder.Common.Models
             this.MailNickname = partialGroup.MailNickname.Value;
             this.SecurityEnabled = partialGroup.SecurityEnabled.Value;
         }
+
+        public override bool Equals(object obj)
+        {
+            return obj != null && obj is Group && ((Group)obj).ObjectId == this.ObjectId;
+        }
+
+        public override int GetHashCode()
+        {
+            return this.ObjectId.GetHashCode();
+        }
     }
 }
