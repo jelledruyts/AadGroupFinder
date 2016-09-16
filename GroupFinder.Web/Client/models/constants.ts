@@ -9,8 +9,8 @@
         public static ControllerNames = {
             Root: "rootCtrl",
             Search: "searchCtrl",
-            Discover: "discoverCtrl",
-            Browse: "browseCtrl",
+            SharedGroupMemberships: "sharedGroupMembershipsCtrl",
+            UserGroups: "usersCtrl",
             About: "aboutCtrl",
             Recommend: "recommendCtrl"
         };

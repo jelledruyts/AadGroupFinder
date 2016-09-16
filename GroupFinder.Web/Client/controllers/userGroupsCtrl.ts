@@ -3,7 +3,7 @@
 module app.controllers {
     "use strict";
 
-    interface IBrowseScope extends ng.IScope {
+    interface IUserGroupsScope extends ng.IScope {
         userPrincipalName: string;
         isAutocompleteBusy: boolean;
         autocompleteError: string;
@@ -13,11 +13,16 @@ module app.controllers {
         initializeAutocomplete(elementName: string): void
     }
 
-    class BrowseCtrl {
-        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
-        constructor(private $scope: IBrowseScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
-            appInsights.trackPageView("Browse");
-            this.$scope.userPrincipalName = null;
+    class UserGroupsCtrl {
+        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder, "$routeParams"];
+        constructor(private $scope: IUserGroupsScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc, private $routeParams: ng.route.IRouteParamsService) {
+            appInsights.trackPageView("UserGroups");
+            var userPrincipalNameParameter = $routeParams["userPrincipalName"];
+            if (typeof userPrincipalNameParameter !== "undefined") {
+                this.$scope.userPrincipalName = userPrincipalNameParameter;
+            } else {
+                this.$scope.userPrincipalName = null;
+            }
             this.$scope.isAutocompleteBusy = false;
             this.$scope.autocompleteError = null;
             this.$scope.userGroups = null;
@@ -64,8 +69,12 @@ module app.controllers {
                     }
                 });
             }
+
+            if (this.$scope.userPrincipalName !== null) {
+                this.$scope.getUserGroups();
+            }
         }
     }
 
-    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Browse, BrowseCtrl);
+    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.UserGroups, UserGroupsCtrl);
 }

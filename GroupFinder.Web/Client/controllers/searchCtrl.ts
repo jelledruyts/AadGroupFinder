@@ -21,10 +21,15 @@ module app.controllers {
     }
 
     class SearchCtrl {
-        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
-        constructor(private $scope: ISearchScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder, "$routeParams"];
+        constructor(private $scope: ISearchScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc, private $routeParams: ng.route.IRouteParamsService) {
             appInsights.trackPageView("Search");
-            this.$scope.searchText = null;
+            var searchTextParameter = $routeParams["searchText"];
+            if (typeof searchTextParameter !== "undefined") {
+                this.$scope.searchText = searchTextParameter;
+            } else {
+                this.$scope.searchText = null;
+            }
             this.$scope.groups = null;
             this.$scope.pageSize = 25;
             this.$scope.pageIndex = 0;
@@ -93,6 +98,10 @@ module app.controllers {
                     .finally(() => {
                         $scope.groupInEdit.isBusy = false;
                     });
+            }
+
+            if (this.$scope.searchText !== null) {
+                this.$scope.findGroups();
             }
         }
     }

@@ -30,7 +30,7 @@ module app {
         .config(["$routeProvider", "$httpProvider", "adalAuthenticationServiceProvider", "configuration", function ($routeProvider: ng.route.IRouteProvider, $httpProvider: ng.IHttpProvider, adalProvider: any, configuration: appConfig.Configuration) {
             // Configure the routes.
             $routeProvider
-                .when("/", {
+                .when("/search", {
                     templateUrl: "views/search.html",
                     controller: app.models.Constants.ControllerNames.Search,
                     requireADLogin: true
@@ -40,14 +40,14 @@ module app {
                     controller: app.models.Constants.ControllerNames.Recommend,
                     requireADLogin: true
                 })
-                .when("/discover", {
-                    templateUrl: "views/discover.html",
-                    controller: app.models.Constants.ControllerNames.Discover,
+                .when("/shared", {
+                    templateUrl: "views/sharedGroupMemberships.html",
+                    controller: app.models.Constants.ControllerNames.SharedGroupMemberships,
                     requireADLogin: true
                 })
-                .when("/browse", {
-                    templateUrl: "views/browse.html",
-                    controller: app.models.Constants.ControllerNames.Browse,
+                .when("/users/:userPrincipalName?", {
+                    templateUrl: "views/userGroups.html",
+                    controller: app.models.Constants.ControllerNames.UserGroups,
                     requireADLogin: true
                 })
                 .when("/about", {
@@ -55,7 +55,7 @@ module app {
                     controller: app.models.Constants.ControllerNames.About,
                     requireADLogin: true
                 })
-                .otherwise({ redirectTo: "/" });
+                .otherwise({ redirectTo: "/search" });
 
             adalProvider.init(
                 {

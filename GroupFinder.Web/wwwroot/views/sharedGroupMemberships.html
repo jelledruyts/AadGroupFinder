@@ -1,4 +1,4 @@
-﻿<h2>Discover Groups</h2>
+﻿<h2>Shared Groups</h2>
 <blockquote>
     Want to find out which groups certain people have in common that could be relevant for you?
     Perhaps you want to cross-reference a few people and want to discover which groups they share?
@@ -49,7 +49,7 @@
                         <div class="panel-footer">
                             <strong>Members</strong>
                             <ul class="list-unstyled list-inline">
-                                <li ng-repeat="userId in sharedGroupMembership.userIds">{{userId}}</li>
+                                <li ng-repeat="userId in sharedGroupMembership.userIds"><a ng-href="#/users/{{userId}}">{{userId}}</a></li>
                             </ul>
                         </div>
                     </div>

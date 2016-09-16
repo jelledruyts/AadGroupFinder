@@ -3,7 +3,7 @@
 module app.controllers {
     "use strict";
 
-    interface IDiscoverScope extends ng.IScope {
+    interface ISharedGroupMembershipsScope extends ng.IScope {
         userPrincipalName: string;
         selectedUserPrincipalNames: string[];
         sharedGroupMemberships: app.models.SharedGroupMembership[];
@@ -16,10 +16,10 @@ module app.controllers {
         initializeAutocomplete(elementName: string): void
     }
 
-    class DiscoverCtrl {
+    class SharedGroupMembershipsCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
-        constructor(private $scope: IDiscoverScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
-            appInsights.trackPageView("Discover");
+        constructor(private $scope: ISharedGroupMembershipsScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+            appInsights.trackPageView("SharedGroupMemberships");
             this.$scope.userPrincipalName = null;
             this.$scope.selectedUserPrincipalNames = [];
             this.$scope.sharedGroupMemberships = null;
@@ -89,5 +89,5 @@ module app.controllers {
         }
     }
 
-    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Discover, DiscoverCtrl);
+    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.SharedGroupMemberships, SharedGroupMembershipsCtrl);
 }
