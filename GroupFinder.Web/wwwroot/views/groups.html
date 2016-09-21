@@ -26,7 +26,7 @@
             <ol class="list-group">
                 <li class="list-group-item" ng-repeat="groupMember in groupMembers">
                     <h4 class="user-displayname">
-                        {{groupMember.displayName}}
+                        <a ng-href="#/users/{{groupMember.userPrincipalName}}">{{groupMember.displayName}}</a>
                         <small class="user-jobtitle" ng-show="groupMember.jobTitle.length > 0">{{groupMember.jobTitle}}</small>
                     </h4>
                     <a title="Email this user" ng-href="mailto:{{groupMember.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{groupMember.mail}}</a>
