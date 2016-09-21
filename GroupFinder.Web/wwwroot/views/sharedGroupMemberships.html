@@ -33,26 +33,7 @@
             <h4>Found {{sharedGroupMemberships.length}} shared group {{sharedGroupMemberships.length === 1 ? 'membership' : 'memberships'}}</h4>
             <ol class="list-unstyled group-panel-list">
                 <li class="group-panel-item" ng-repeat="sharedGroupMembership in sharedGroupMemberships">
-                    <div class="panel panel-{{sharedGroupMembership.percentMatch | bootstrap:'percentage-to-context'}}">
-                        <div class="panel-heading">
-                            <h3 class="panel-title group-name">{{sharedGroupMembership.group.displayName}} ({{sharedGroupMembership.percentMatch | percentage:0}} match)</h3>
-                            <div class="group-actions">
-                                <a title="Email this group" ng-href="mailto:{{sharedGroupMembership.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{sharedGroupMembership.group.mail}}</a>
-                                <a class="margin-left-lg" title="Become a member of this group" target="_blank" ng-href="{{getJoinGroupLink(sharedGroupMembership.group)}}" ng-show="canJoinGroup(sharedGroupMembership.group)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="margin-top-md group-description" ng-show="sharedGroupMembership.group.description.length > 0">
-                                {{sharedGroupMembership.group.description}}
-                            </div>
-                        </div>
-                        <div class="panel-footer">
-                            <strong>Members</strong>
-                            <ul class="list-unstyled list-inline">
-                                <li ng-repeat="userId in sharedGroupMembership.userIds"><a ng-href="#/users/{{userId}}">{{userId}}</a></li>
-                            </ul>
-                        </div>
-                    </div>
+                    <group group="sharedGroupMembership.group" percentage="sharedGroupMembership.percentMatch" percentage-suffix="'match'" members="sharedGroupMembership.userIds" />
                 </li>
             </ol>
         </div>

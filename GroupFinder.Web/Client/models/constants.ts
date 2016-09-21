@@ -10,12 +10,16 @@
             Root: "rootCtrl",
             Search: "searchCtrl",
             SharedGroupMemberships: "sharedGroupMembershipsCtrl",
-            UserGroups: "usersCtrl",
+            Users: "usersCtrl",
             About: "aboutCtrl",
-            Recommend: "recommendCtrl"
+            Recommend: "recommendCtrl",
+            Groups: "groupsCtrl",
+            Group: "groupCtrl",
+            AnnotatedGroup: "annotatedGroupCtrl"
         };
         public static ServiceNames = {
-            GroupFinder: "groupFinderSvc"
+            GroupFinder: "groupFinderSvc",
+            UrlHelper: "urlHelperSvc"
         };
         public static ApiVersions = {
             GroupFinder: "api-version=1.0"

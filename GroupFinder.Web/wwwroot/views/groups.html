@@ -1,0 +1,37 @@
+﻿<h2>Groups</h2>
+<blockquote>Want to get group details and find out which members a group has?</blockquote>
+<form>
+    <label for="groupMail">Enter a group mail address (e.g. alias@example.org) or search for it:</label>
+    <div class="input-group">
+        <span class="input-group-addon">
+            <i class="fa fa-keyboard-o" aria-hidden="true" ng-hide="isAutocompleteBusy || (autocompleteError !== null && autocompleteError.length > 0)"></i>
+            <i class="fa fa-spinner fa-spin" aria-hidden="true" ng-show="isAutocompleteBusy"></i>
+            <i class="fa fa-exclamation-circle text-danger" aria-hidden="true" title="{{autocompleteError}}" ng-show="autocompleteError !== null && autocompleteError.length > 0"></i>
+        </span>
+        <input type="text" id="groupMail" class="form-control" placeholder="Enter a group mail (e.g. alias@example.org)..." ng-init="initializeAutocomplete('groupMail')" ng-model="groupMail" ng-keyup="$event.keyCode === 13 && getGroup()">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="button" ng-click="getGroup()"><i class="fa fa-search" aria-hidden="true"></i> Get Group</button>
+        </span>
+    </div>
+    <div class="margin-top-lg" ng-show="group !== null">
+        <annotated-group group="group" show-group-details-link="false" />
+        <button class="btn btn-primary" type="button" ng-click="getGroupMembers()"><i class="fa fa-search" aria-hidden="true"></i> Get Members</button>
+    </div>
+    <div class="margin-top-lg" ng-show="groupMembers !== null">
+        <div class="alert alert-warning" ng-show="groupMembers.length === 0">
+            Nothing found :-(
+        </div>
+        <div ng-show="groupMembers.length > 0">
+            <h4>Found {{groupMembers.length}} {{groupMembers.length === 1 ? 'member' : 'members'}}</h4>
+            <ol class="list-group">
+                <li class="list-group-item" ng-repeat="groupMember in groupMembers">
+                    <h4 class="user-displayname">
+                        {{groupMember.displayName}}
+                        <small class="user-jobtitle" ng-show="groupMember.jobTitle.length > 0">{{groupMember.jobTitle}}</small>
+                    </h4>
+                    <a title="Email this user" ng-href="mailto:{{groupMember.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{groupMember.mail}}</a>
+                </li>
+            </ol>
+        </div>
+    </div>
+</form>

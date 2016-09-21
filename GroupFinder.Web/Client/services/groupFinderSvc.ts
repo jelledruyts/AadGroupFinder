@@ -13,7 +13,7 @@
             return this.$http.get(this.baseUrl + "status?" + app.models.Constants.ApiVersions.GroupFinder);
         }
 
-        searchGroups(search: string, top: number, skip: number): ng.IHttpPromise<app.models.Group[]> {
+        searchGroups(search: string, top: number, skip: number): ng.IHttpPromise<app.models.GroupSearchResult[]> {
             var params = { "search": search, "$top": top, "$skip": skip };
             return this.$http.get(this.baseUrl + "groups/search?" + app.models.Constants.ApiVersions.GroupFinder, { params: params });
         }
@@ -45,6 +45,14 @@
 
         getRecommendedGroups(userId: string): ng.IHttpPromise<app.models.RecommendedGroup[]> {
             return this.$http.get(this.baseUrl + "users/" + userId + "/recommendedGroups?" + app.models.Constants.ApiVersions.GroupFinder);
+        }
+
+        getGroupByMail(mail: string): ng.IHttpPromise<app.models.AnnotatedGroup> {
+            return this.$http.get(this.baseUrl + "groups/getbymail/" + mail + "?" + app.models.Constants.ApiVersions.GroupFinder);
+        }
+
+        getGroupMembers(objectId: string): ng.IHttpPromise<app.models.User[]> {
+            return this.$http.get(this.baseUrl + "groups/" + objectId + "/members?" + app.models.Constants.ApiVersions.GroupFinder);
         }
     }
 

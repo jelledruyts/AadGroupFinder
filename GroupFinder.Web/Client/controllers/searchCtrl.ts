@@ -5,19 +5,15 @@ module app.controllers {
 
     interface ISearchScope extends ng.IScope {
         searchText: string;
-        groups: app.models.Group[];
+        groups: app.models.GroupSearchResult[];
         pageSize: number;
         pageIndex: number;
         canPageForward: boolean;
         canPageBackward: boolean;
-        groupInEdit: GroupEdit;
 
         findGroups(): void;
         pageForward(): void;
         pageBackward(): void;
-        editGroup(group: app.models.Group): void;
-        addTagToGroupInEdit(): void;
-        saveGroupInEdit(): void;
     }
 
     class SearchCtrl {
@@ -35,7 +31,6 @@ module app.controllers {
             this.$scope.pageIndex = 0;
             this.$scope.canPageForward = false;
             this.$scope.canPageBackward = false;
-            this.$scope.editGroup = null;
 
             var findGroupsInternal = function (pageIndex: number) {
                 if ($scope.searchText !== null && $scope.searchText.length > 0) {
@@ -76,74 +71,8 @@ module app.controllers {
                 }
             }
 
-            this.$scope.editGroup = function (group: app.models.Group) {
-                $scope.groupInEdit = new GroupEdit(group);
-            }
-
-            this.$scope.saveGroupInEdit = function () {
-                $scope.groupInEdit.message = "Saving...";
-                $scope.groupInEdit.messageClass = "text-info";
-                $scope.groupInEdit.isBusy = true;
-                appInsights.trackEvent("UpdateGroup");
-                groupFinderSvc.updateGroup($scope.groupInEdit.group.objectId, $scope.groupInEdit.notes, $scope.groupInEdit.tags, $scope.groupInEdit.isDiscussionList)
-                    .success(results => {
-                        $scope.groupInEdit.applyChanges();
-                        $scope.groupInEdit.message = "Changes were saved. Thanks for helping the community out!";
-                        $scope.groupInEdit.messageClass = "text-success";
-                    })
-                    .error(results => {
-                        $scope.groupInEdit.message = "An error occurred while saving :-( Please try again later...";
-                        $scope.groupInEdit.messageClass = "text-danger";
-                    })
-                    .finally(() => {
-                        $scope.groupInEdit.isBusy = false;
-                    });
-            }
-
             if (this.$scope.searchText !== null) {
                 this.$scope.findGroups();
-            }
-        }
-    }
-
-    class GroupEdit {
-        notes: string;
-        tags: string[];
-        isDiscussionList: boolean;
-        tagToAdd: string;
-        message: string;
-        messageClass: string;
-        isBusy: boolean;
-
-        constructor(public group: app.models.Group) {
-            this.notes = group.notes;
-            this.tags = group.tags.slice(0); // Shallow array clone.
-            this.isDiscussionList = group.isDiscussionList;
-            this.tagToAdd = null;
-            this.isBusy = false;
-        }
-
-        applyChanges(): void {
-            this.group.notes = this.notes;
-            this.group.tags = this.tags;
-            this.group.isDiscussionList = this.isDiscussionList;
-        }
-
-        addTag(): void {
-            if (this.tagToAdd !== null && this.tagToAdd.length > 0) {
-                var index = this.tags.indexOf(this.tagToAdd);
-                if (index < 0) {
-                    this.tags.push(this.tagToAdd);
-                    this.tagToAdd = null;
-                }
-            }
-        }
-
-        removeTag(tag: string) {
-            for (var i = this.tags.length - 1; i >= 0; i--) {
-                if (this.tags[i] === tag) {
-                    this.tags.splice(i, 1);
-                }
             }
         }
     }

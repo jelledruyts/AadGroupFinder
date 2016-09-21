@@ -21,20 +21,7 @@
             <h4>Found {{recommendedGroups.length}} recommended {{recommendedGroups.length === 1 ? 'group' : 'groups'}}</h4>
             <ol class="list-unstyled group-panel-list">
                 <li class="group-panel-item" ng-repeat="recommendedGroup in recommendedGroups">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h3 class="panel-title group-name">{{recommendedGroup.group.displayName}} ({{recommendedGroup.score | percentage:0}} score)</h3>
-                            <div class="group-actions">
-                                <a title="Email this group" ng-href="mailto:{{recommendedGroup.group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{recommendedGroup.group.mail}}</a>
-                                <a class="margin-left-lg" title="Become a member of this group" target="_blank" ng-href="{{getJoinGroupLink(recommendedGroup.group)}}" ng-show="canJoinGroup(recommendedGroup.group)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="margin-top-md group-description" ng-show="recommendedGroup.group.description.length > 0">
-                                {{recommendedGroup.group.description}}
-                            </div>
-                        </div>
-                    </div>
+                    <group group="recommendedGroup.group" percentage="recommendedGroup.score" percentage-suffix="'score'" />
                 </li>
             </ol>
         </div>

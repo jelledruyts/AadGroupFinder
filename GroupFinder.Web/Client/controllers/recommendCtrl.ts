@@ -14,11 +14,19 @@ module app.controllers {
     }
 
     class RecommendCtrl {
-        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder];
-        constructor(private $scope: IRecommendScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc) {
+        static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder, "$routeParams"];
+        constructor(private $scope: IRecommendScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc, private $routeParams: ng.route.IRouteParamsService) {
             appInsights.trackPageView("Recommend");
-            if (this.$rootScope.userInfo.isAuthenticated) {
-                this.$scope.userPrincipalName = this.$rootScope.userInfo.userName;
+            var runImmediately = false;
+            this.$scope.userPrincipalName = null;
+            var userPrincipalNameParameter = $routeParams["userPrincipalName"];
+            if (typeof userPrincipalNameParameter !== "undefined") {
+                this.$scope.userPrincipalName = userPrincipalNameParameter;
+                runImmediately = true;
+            } else {
+                if (this.$rootScope.userInfo.isAuthenticated) {
+                    this.$scope.userPrincipalName = this.$rootScope.userInfo.userName;
+                }
             }
             this.$scope.isAutocompleteBusy = false;
             this.$scope.autocompleteError = null;
@@ -49,7 +57,7 @@ module app.controllers {
                         $scope.autocompleteError = null;
                         groupFinderSvc.searchUsers(request.term, 10)
                             .success(results => {
-                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName, "value": user.userPrincipalName }));
+                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName + " (" + user.userPrincipalName + ")", "value": user.userPrincipalName }));
                                 response(autocompleteItems);
                             })
                             .error(results => {
@@ -65,6 +73,10 @@ module app.controllers {
                         return false;
                     }
                 });
+            }
+
+            if (runImmediately) {
+                this.$scope.getRecommendedGroups();
             }
         }
     }

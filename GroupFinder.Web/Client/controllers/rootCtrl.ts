@@ -12,8 +12,6 @@
         startBusy(busyMessage?: string): void;
         stopBusy(): void;
         setError(error?: app.models.ErrorResponse): void;
-        canJoinGroup(group: app.models.Group): boolean;
-        getJoinGroupLink(group: app.models.Group): void;
     }
 
     class RootCtrl {
@@ -21,7 +19,7 @@
         constructor(private $rootScope: IRootScope, private $location: ng.ILocationService, adalService: any, configuration: appConfig.Configuration) {
             // UI helpers.
             this.$rootScope.isActive = function (viewLocation: string) {
-                return viewLocation === $location.path();
+                return $location.path().indexOf(viewLocation) === 0;
             };
 
             // Login and Logout.
@@ -65,7 +63,7 @@
                         // An error string.
                         errorMessage = <string>errorResponse;
                     }
-                    else if (typeof errorResponse.error != "undefined") {
+                    else if (typeof errorResponse.error !== "undefined") {
                         // A full-blown error object.
                         errorResponse = <app.models.ErrorResponse>errorResponse;
                         if (errorResponse.error !== null) {
@@ -85,19 +83,6 @@
                     errorMessage = "An error occurred :-( Please try again later.";
                 }
                 toastr.error(errorMessage);
-            }
-
-            // Group handling.
-            this.$rootScope.canJoinGroup = function (group: app.models.Group): boolean {
-                return typeof (configuration.groupJoinServiceUrlTemplate) !== "undefined" && configuration.groupJoinServiceUrlTemplate !== null && configuration.groupJoinServiceUrlTemplate.length > 0;
-            }
-            this.$rootScope.getJoinGroupLink = function (group: app.models.Group) {
-                var url = configuration.groupJoinServiceUrlTemplate;
-                url = url.replace("{displayName}", encodeURIComponent(group.displayName));
-                url = url.replace("{mail}", encodeURIComponent(group.mail));
-                url = url.replace("{mailNickname}", encodeURIComponent(group.mailNickname));
-                url = url.replace("{objectId}", encodeURIComponent(group.objectId));
-                return url;
             }
 
             // Initialization.

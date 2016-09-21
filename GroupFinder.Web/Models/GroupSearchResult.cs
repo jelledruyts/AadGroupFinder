@@ -13,9 +13,6 @@ namespace GroupFinder.Web.Models
         public GroupSearchResult(IGroupSearchResult value)
             : base(value)
         {
-            this.Tags = value.Tags;
-            this.Notes = value.Notes;
-            this.IsDiscussionList = value.IsDiscussionList;
             this.Score = value.Score;
         }
     }

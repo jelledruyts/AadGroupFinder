@@ -21,20 +21,7 @@
             <h4>Found {{userGroups.length}} {{userGroups.length === 1 ? 'group' : 'groups'}}</h4>
             <ol class="list-unstyled group-panel-list">
                 <li class="group-panel-item" ng-repeat="userGroup in userGroups">
-                    <div class="panel panel-info">
-                        <div class="panel-heading">
-                            <h3 class="panel-title group-name">{{userGroup.displayName}}</h3>
-                            <div class="group-actions">
-                                <a title="Email this group" ng-href="mailto:{{userGroup.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{userGroup.mail}}</a>
-                                <a class="margin-left-lg" title="Become a member of this group" target="_blank" ng-href="{{getJoinGroupLink(userGroup)}}" ng-show="canJoinGroup(userGroup)"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
-                            </div>
-                        </div>
-                        <div class="panel-body">
-                            <div class="margin-top-md group-description" ng-show="userGroup.description.length > 0">
-                                {{userGroup.description}}
-                            </div>
-                        </div>
-                    </div>
+                    <group group="userGroup" />
                 </li>
             </ol>
         </div>

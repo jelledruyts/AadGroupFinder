@@ -205,6 +205,29 @@ namespace GroupFinder.Common.Aad
             return groups.OrderBy(g => g.DisplayName).ToArray();
         }
 
+        public async Task<IList<IUser>> GetGroupMembersAsync(string objectId)
+        {
+            if (string.IsNullOrWhiteSpace(objectId))
+            {
+                throw new ArgumentException($"The \"{nameof(objectId)}\" parameter is required.", nameof(objectId));
+            }
+
+            var members = new List<IUser>();
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group members for group \"{objectId}\"");
+            Func<AadUser, PagingState, Task> itemHandler = (user, state) =>
+            {
+                members.Add(user);
+                return Task.FromResult(0);
+            };
+            Action retryingHandler = () =>
+            {
+                members.Clear();
+            };
+            await VisitPagedArrayAsync<AadUser>($"{this.aadGraphApiTenantEndpoint}/groups/{objectId}/members", AadUser.ObjectTypeName, null, itemHandler, retryingHandler, null);
+            await this.logger.LogAsync(EventLevel.Verbose, $"Retrieved {members.Count} members for group \"{objectId}\"");
+            return members.OrderBy(m => m.DisplayName).ToArray();
+        }
+
         #endregion
 
         #region Groups

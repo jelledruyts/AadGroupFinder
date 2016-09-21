@@ -3,7 +3,7 @@
 module app.controllers {
     "use strict";
 
-    interface IUserGroupsScope extends ng.IScope {
+    interface IUsersScope extends ng.IScope {
         userPrincipalName: string;
         isAutocompleteBusy: boolean;
         autocompleteError: string;
@@ -13,9 +13,9 @@ module app.controllers {
         initializeAutocomplete(elementName: string): void
     }
 
-    class UserGroupsCtrl {
+    class UsersCtrl {
         static $inject = ["$scope", "$rootScope", app.models.Constants.ServiceNames.GroupFinder, "$routeParams"];
-        constructor(private $scope: IUserGroupsScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc, private $routeParams: ng.route.IRouteParamsService) {
+        constructor(private $scope: IUsersScope, private $rootScope: IRootScope, private groupFinderSvc: app.services.GroupFinderSvc, private $routeParams: ng.route.IRouteParamsService) {
             appInsights.trackPageView("UserGroups");
             var userPrincipalNameParameter = $routeParams["userPrincipalName"];
             if (typeof userPrincipalNameParameter !== "undefined") {
@@ -52,7 +52,7 @@ module app.controllers {
                         $scope.autocompleteError = null;
                         groupFinderSvc.searchUsers(request.term, 10)
                             .success(results => {
-                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName, "value": user.userPrincipalName }));
+                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName + " (" + user.userPrincipalName + ")", "value": user.userPrincipalName }));
                                 response(autocompleteItems);
                             })
                             .error(results => {
@@ -76,5 +76,5 @@ module app.controllers {
         }
     }
 
-    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.UserGroups, UserGroupsCtrl);
+    angular.module(app.models.Constants.App.AngularAppName).controller(app.models.Constants.ControllerNames.Users, UsersCtrl);
 }

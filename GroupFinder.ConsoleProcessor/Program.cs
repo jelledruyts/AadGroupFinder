@@ -48,7 +48,9 @@ namespace GroupFinder.ConsoleProcessor
             var logger = new AggregateLogger(new ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
             var persistentStorageForState = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.StateContainer, appConfig.AzureStorage.AdminKey);
             var persistentStorageForBackups = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.BackupContainer, appConfig.AzureStorage.AdminKey);
-            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey, false);
+            // When running as a non-interactive service, do not force index initialization.
+            var forceIndexInitialization = interactive;
+            var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey, forceIndexInitialization);
 
             var cache = new PersistentStorageTokenCache(logger, persistentStorageForState, appConfig.AzureAD.TokenCacheFileName);
             await cache.LoadAsync();
@@ -71,6 +73,8 @@ namespace GroupFinder.ConsoleProcessor
                         Console.WriteLine("  4 - Find Groups");
                         Console.WriteLine("  5 - Find Shared Group Memberships");
                         Console.WriteLine("  6 - Get Recommended Groups");
+                        Console.WriteLine("  7 - Get Group By Mail");
+                        Console.WriteLine("  8 - Get Group Members");
                         Console.WriteLine("  A - Synchronize Groups");
                         Console.WriteLine("  B - Prime ADAL Token Cache");
                         var command = Console.ReadLine().ToUpperInvariant();
@@ -97,6 +101,14 @@ namespace GroupFinder.ConsoleProcessor
                         else if (command == "6")
                         {
                             await GetRecommendedGroupsAsync(processor);
+                        }
+                        else if (command == "7")
+                        {
+                            await GetGroupByMailAsync(processor);
+                        }
+                        else if (command == "8")
+                        {
+                            await GetGroupMembersAsync(processor);
                         }
                         else if (command == "A")
                         {
@@ -160,7 +172,7 @@ namespace GroupFinder.ConsoleProcessor
             {
                 Console.WriteLine($"  {++index}: {user.DisplayName} ({user.UserPrincipalName})");
             }
-            Console.WriteLine($"Found {users.Count} user(s) in {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {users.Count} user(s) [{stopwatch.ElapsedMilliseconds} ms]");
         }
 
         private static async Task GetUserGroupsAsync(Processor processor)
@@ -177,7 +189,7 @@ namespace GroupFinder.ConsoleProcessor
             {
                 Console.WriteLine($"  {++index}: {group.DisplayName} ({group.Mail})");
             }
-            Console.WriteLine($"Found {groups.Count} group(s) in {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {groups.Count} group(s) [{stopwatch.ElapsedMilliseconds} ms]");
         }
 
         private static async Task FindGroupsAsync(Processor processor)
@@ -194,7 +206,7 @@ namespace GroupFinder.ConsoleProcessor
             {
                 Console.WriteLine($"  {++index} ({group.Score}): {group.DisplayName} ({group.Mail})");
             }
-            Console.WriteLine($"Found {groups.Count} group(s) in {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {groups.Count} group(s) [{stopwatch.ElapsedMilliseconds} ms]");
         }
 
         private static async Task GetSharedGroupMembershipsAsync(Processor processor)
@@ -210,7 +222,7 @@ namespace GroupFinder.ConsoleProcessor
             {
                 Console.WriteLine($"  {sharedGroup.PercentMatch.ToString("P0")}: \"{sharedGroup.Group.DisplayName}\" ({sharedGroup.Type.ToString()}: {string.Join(";", sharedGroup.UserIds)})");
             }
-            Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) in {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {sharedGroups.Count} shared group membership(s) [{stopwatch.ElapsedMilliseconds} ms]");
         }
 
         private static async Task GetRecommendedGroupsAsync(Processor processor)
@@ -226,7 +238,53 @@ namespace GroupFinder.ConsoleProcessor
             {
                 Console.WriteLine($"  {recommendedGroup.Score.ToString("P0")}: \"{recommendedGroup.Group.DisplayName}\" ({recommendedGroup.Reasons.ToString()})");
             }
-            Console.WriteLine($"Found {recommendedGroups.Count} recommended group(s) in {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Found {recommendedGroups.Count} recommended group(s) [{stopwatch.ElapsedMilliseconds} ms]");
+        }
+
+        private static async Task GetGroupByMailAsync(Processor processor)
+        {
+            Console.WriteLine("Enter group mail:");
+            var mail = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var group = await processor.GetGroupByMailAsync(mail);
+            stopwatch.Stop();
+
+            if (group == null)
+            {
+                Console.WriteLine($"Could not find group [{stopwatch.ElapsedMilliseconds} ms]");
+            }
+            else
+            {
+                Console.WriteLine($"Object ID            : {group.ObjectId}");
+                Console.WriteLine($"Display Name         : {group.DisplayName}");
+                Console.WriteLine($"Mail                 : {group.Mail}");
+                Console.WriteLine($"Mail Nickname        : {group.MailNickname}");
+                Console.WriteLine($"Mail Enabled         : {group.MailEnabled}");
+                Console.WriteLine($"Security Enabled     : {group.SecurityEnabled}");
+                Console.WriteLine($"Description          : {group.Description}");
+                Console.WriteLine($"Open Discussion List : {group.IsDiscussionList}");
+                Console.WriteLine($"Tags                 : {string.Join(", ", group.Tags)}");
+                Console.WriteLine($"Notes                : {group.Notes}");
+                Console.WriteLine($"Found group [{stopwatch.ElapsedMilliseconds} ms]");
+            }
+        }
+
+        private static async Task GetGroupMembersAsync(Processor processor)
+        {
+            Console.WriteLine("Enter group object id:");
+            var groupId = Console.ReadLine();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var groupMembers = await processor.GetGroupMembersAsync(groupId);
+            stopwatch.Stop();
+
+            var index = 0;
+            foreach (var groupMember in groupMembers)
+            {
+                Console.WriteLine($"  {++index}: {groupMember.DisplayName} ({groupMember.UserPrincipalName})");
+            }
+            Console.WriteLine($"Found {groupMembers.Count} group member(s) [{stopwatch.ElapsedMilliseconds} ms]");
         }
 
         private static async Task SynchronizeGroupsOnceAsync(Processor processor)

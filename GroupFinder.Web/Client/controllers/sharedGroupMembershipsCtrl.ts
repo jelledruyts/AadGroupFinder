@@ -69,7 +69,7 @@ module app.controllers {
                         $scope.autocompleteError = null;
                         groupFinderSvc.searchUsers(request.term, 10)
                             .success(results => {
-                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName, "value": user.userPrincipalName }));
+                                var autocompleteItems = results.map((user, index, users) => ({ "label": user.displayName + " (" + user.userPrincipalName + ")", "value": user.userPrincipalName }));
                                 response(autocompleteItems);
                             })
                             .error(results => {

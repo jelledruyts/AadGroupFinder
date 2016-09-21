@@ -1,4 +1,5 @@
-﻿module app.models {
+﻿/// <reference path="group.ts" />
+module app.models {
     "use strict";
     export class SharedGroupMembership {
         group: Group;

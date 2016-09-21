@@ -80,7 +80,7 @@ namespace GroupFinder.Common.Search
                     new Field(FieldNameObjectId, DataType.String, analyzerName) { IsKey = true },
                     new Field(FieldNameDisplayName, DataType.String, analyzerName) { IsSearchable = true },
                     new Field(FieldNameDescription, DataType.String, analyzerName) { IsSearchable = true },
-                    new Field(FieldNameMail, DataType.String, analyzerName) { IsSearchable = true },
+                    new Field(FieldNameMail, DataType.String, analyzerName) { IsSearchable = true, IsFilterable = false }, // When starting from scratch, make this field filterable and update the code in GetGroupByMailAsync.
                     new Field(FieldNameMailEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
                     new Field(FieldNameMailNickname, DataType.String, analyzerName) { IsSearchable = true },
                     new Field(FieldNameSecurityEnabled, DataType.Boolean) { IsSearchable = false, IsFilterable = true },
@@ -216,6 +216,32 @@ namespace GroupFinder.Common.Search
             await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group \"{objectId}\"");
             var result = await this.indexClient.Documents.GetAsync(objectId);
             return new SearchGroup(0.0, result);
+        }
+
+        public async Task<IAnnotatedGroup> GetGroupByMailAsync(string mail)
+        {
+            if (string.IsNullOrWhiteSpace(mail))
+            {
+                throw new ArgumentException($"The \"{nameof(mail)}\" parameter is required.", nameof(mail));
+            }
+            await EnsureInitialized();
+            await this.logger.LogAsync(EventLevel.Informational, $"Retrieving group by mail \"{mail}\"");
+            var result = await this.indexClient.Documents.SearchAsync(mail, new SearchParameters { SearchFields = new[] { FieldNameMail }, Top = 1 });
+
+            // The code below can be used if the Mail field is actually defined as filterable.
+            //var mailFilter = WebUtility.UrlEncode(mail.Replace("'", "''")); // Escape ' with '' and URL encode.
+            //var result = await this.indexClient.Documents.SearchAsync(null, new SearchParameters { Filter = $"{FieldNameMail} eq '{mailFilter}'" });
+            //if (result.Results.Count > 1)
+            //{
+            //    await this.logger.LogAsync(EventLevel.Error, $"There are {result.Results.Count} groups with mail \"{mail}\" which was assumed to be unique, taking the first one.");
+            //}
+
+            if (!result.Results.Any())
+            {
+                return null;
+            }
+            var group = result.Results.FirstOrDefault();
+            return new SearchGroup(0.0, group.Document);
         }
 
         public async Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip)

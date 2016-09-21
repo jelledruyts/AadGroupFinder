@@ -11,6 +11,7 @@ namespace GroupFinder.Common.Search
         Task UpsertGroupsAsync(IEnumerable<IPartialGroup> groups);
         Task DeleteGroupsAsync(IEnumerable<string> objectId);
         Task<IAnnotatedGroup> GetGroupAsync(string objectId);
+        Task<IAnnotatedGroup> GetGroupByMailAsync(string mail);
         Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip);
         Task UpdateGroupAsync(string objectId, IList<string> tags, string notes, bool isDiscussionList);
     }

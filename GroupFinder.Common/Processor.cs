@@ -211,6 +211,11 @@ namespace GroupFinder.Common
             return this.searchService.GetGroupAsync(objectId);
         }
 
+        public Task<IAnnotatedGroup> GetGroupByMailAsync(string mail)
+        {
+            return this.searchService.GetGroupByMailAsync(mail);
+        }
+
         public Task<IList<IGroupSearchResult>> FindGroupsAsync(string searchText, int top, int skip)
         {
             return this.searchService.FindGroupsAsync(searchText, top, skip);
@@ -224,6 +229,11 @@ namespace GroupFinder.Common
                 var backupData = new GroupBackup(objectId, tags, notes, isDiscussionList);
                 await this.persistentStorageForBackups.SaveAsync($"groups/{objectId}.json", backupData);
             }
+        }
+
+        public Task<IList<IUser>> GetGroupMembersAsync(string objectId)
+        {
+            return this.graphClient.GetGroupMembersAsync(objectId);
         }
 
         #endregion

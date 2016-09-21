@@ -1,0 +1,23 @@
+﻿<div class="panel panel-{{percentage | bootstrap:'percentage-to-context'}}">
+    <div class="panel-heading">
+        <h3 class="panel-title group-name">
+            <a title="Go to the group details" ng-href="#/groups/{{group.mail}}">{{group.displayName}}</a>
+            <span ng-show="percentage">({{percentage | percentage:0}} {{percentageSuffix}})</span>
+        </h3>
+        <div class="group-actions">
+            <a title="Email this group" ng-href="mailto:{{group.mail}}"><i class="fa fa-envelope" aria-hidden="true"></i> {{group.mail}}</a>
+            <a class="margin-left-lg" title="Become a member of this group" target="_blank" ng-href="{{getJoinGroupLink()}}" ng-show="canJoinGroup()"><i class="fa fa-sign-in" aria-hidden="true"></i> Join Group</a>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="margin-top-md group-description" ng-show="group.description.length > 0">
+            {{group.description}}
+        </div>
+    </div>
+    <div class="panel-footer" ng-show="members">
+        <strong>Members</strong>
+        <ul class="list-unstyled list-inline">
+            <li ng-repeat="member in members"><a ng-href="#/users/{{member}}">{{member}}</a></li>
+        </ul>
+    </div>
+</div>

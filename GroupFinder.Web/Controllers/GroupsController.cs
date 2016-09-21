@@ -32,6 +32,14 @@ namespace GroupFinder.Web.Controllers
             return results.Map();
         }
 
+        [Route(Constants.ApiRoutePrefix + "/getbymail/{mail}")]
+        [HttpGet]
+        public async Task<AnnotatedGroup> GetByMail(string mail)
+        {
+            var results = await this.processor.GetGroupByMailAsync(mail);
+            return results.Map();
+        }
+
         [Route(Constants.ApiRoutePrefix + "/{objectId}")]
         [HttpPatch]
         public async Task Patch(string objectId, [FromBody]GroupPatch group)
@@ -45,6 +53,14 @@ namespace GroupFinder.Web.Controllers
         {
             var splitUserIds = userIds == null ? new string[0] : userIds.Split(',');
             var results = await this.processor.GetSharedGroupMembershipsAsync(splitUserIds, minimumType, mailEnabledOnly);
+            return results.Map();
+        }
+
+        [Route(Constants.ApiRoutePrefix + "/{objectId}/members")]
+        [HttpGet]
+        public async Task<IEnumerable<GroupFinder.Web.Models.User>> GetGroupMembers(string objectId)
+        {
+            var results = await this.processor.GetGroupMembersAsync(objectId);
             return results.Map();
         }
     }
