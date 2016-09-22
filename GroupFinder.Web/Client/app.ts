@@ -100,6 +100,7 @@ module app {
                     instance: configuration.aadInstance,
                     tenant: configuration.aadTenant,
                     clientId: configuration.aadClientId,
+                    extraQueryParameter: "domain_hint=" + configuration.aadTenant,
                     // cacheLocation: "localStorage", // enable this for IE, as sessionStorage does not work for localhost.
                 },
                 $httpProvider
