@@ -61,8 +61,8 @@ namespace GroupFinder.Web
                     var authenticatedUserPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
                     options.Filters.Add(new AuthorizeFilter(authenticatedUserPolicy));
 
-                    // Disable caching.
-                    options.Filters.Add(new ResponseCacheAttribute { NoStore = true });
+                    // Disable caching to try and workaround an issue we noticed with ASP.NET Core where the browser is not requesting new content.
+                    options.Filters.Add(new ResponseCacheAttribute { NoStore = true, Location = ResponseCacheLocation.None });
                 })
                 .AddJsonOptions(options =>
                 {
@@ -169,7 +169,7 @@ namespace GroupFinder.Web
 
         private static async Task<Processor> GetProcessorAsync(AppConfiguration appConfig)
         {
-            var logger = new AggregateLogger(new GroupFinder.Common.Logging.ILogger[] { new ConsoleLogger(EventLevel.Informational), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
+            var logger = new AggregateLogger(new GroupFinder.Common.Logging.ILogger[] { new ConsoleLogger(EventLevel.Verbose), new DebugLogger(EventLevel.Verbose), new TraceLogger(EventLevel.Verbose) });
             var persistentStorageForState = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.StateContainer, appConfig.AzureStorage.AdminKey);
             var persistentStorageForBackups = new AzureBlobStorage(logger, appConfig.AzureStorage.Account, appConfig.AzureStorage.BackupContainer, appConfig.AzureStorage.AdminKey);
             var searchService = new AzureSearchService(logger, appConfig.AzureSearch.Service, appConfig.AzureSearch.Index, appConfig.AzureSearch.AdminKey, true);

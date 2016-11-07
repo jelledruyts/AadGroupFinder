@@ -308,7 +308,7 @@ namespace GroupFinder.ConsoleProcessor
             var fileName = Console.ReadLine();
             var cache = new PersistentStorageTokenCache(logger, persistentStorage, fileName);
             var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + tenant, true, cache);
-            var authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, clientId, redirectUri, new PlatformParameters(PromptBehavior.Auto));
+            var authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, clientId, redirectUri, new PlatformParameters(PromptBehavior.Always));
             var token = authenticationResult.AccessToken;
         }
 
