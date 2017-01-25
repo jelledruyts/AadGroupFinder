@@ -420,6 +420,10 @@ namespace GroupFinder.Common.Aad
                 {
                     // Call the handler to process the data.
                     await this.logger.LogAsync(EventLevel.Verbose, $"Received response with success status code {(int)response.StatusCode} ({response.ReasonPhrase})");
+                    foreach (var header in response.Headers)
+                    {
+                        await this.logger.LogAsync(EventLevel.Verbose, $"[HEADER] {header.Key} = {string.Join("|", header.Value)}");
+                    }
                     await jsonHandler(jsonReader);
                 }
                 else
