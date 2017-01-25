@@ -306,6 +306,7 @@ namespace GroupFinder.ConsoleProcessor
         {
             Console.WriteLine("Enter the file name of the cache:");
             var fileName = Console.ReadLine();
+            await persistentStorage.DeleteAsync(fileName);
             var cache = new PersistentStorageTokenCache(logger, persistentStorage, fileName);
             var authenticationContext = new AuthenticationContext(Constants.AadEndpoint + tenant, true, cache);
             var authenticationResult = await authenticationContext.AcquireTokenAsync(Constants.AadGraphApiEndpoint, clientId, redirectUri, new PlatformParameters(PromptBehavior.Always));
