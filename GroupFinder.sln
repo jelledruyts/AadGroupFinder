@@ -1,20 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupFinder.Common", "GroupFinder.Common\GroupFinder.Common.csproj", "{82506D86-B8ED-46BB-82F7-3A2C1EE5A856}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "GroupFinder.ConsoleProcessor", "GroupFinder.ConsoleProcessor\GroupFinder.ConsoleProcessor.xproj", "{5C7E2A21-2960-42A0-8323-F8AE6BA7A0B0}"
-EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "GroupFinder.Web", "GroupFinder.Web\GroupFinder.Web.xproj", "{888D8765-E2D9-445D-9373-4CDC74E7A412}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F00A6F2F-DA16-4A36-A551-72ECFE2FA280}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GroupFinder.Common", "GroupFinder.Common\GroupFinder.Common.csproj", "{82506D86-B8ED-46BB-82F7-3A2C1EE5A856}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GroupFinder.ConsoleProcessor", "GroupFinder.ConsoleProcessor\GroupFinder.ConsoleProcessor.csproj", "{5C7E2A21-2960-42A0-8323-F8AE6BA7A0B0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GroupFinder.Web", "GroupFinder.Web\GroupFinder.Web.csproj", "{888D8765-E2D9-445D-9373-4CDC74E7A412}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
